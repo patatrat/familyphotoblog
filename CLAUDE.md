@@ -86,9 +86,9 @@ Priority scale:
 | A5 | ✓ EXIF stripping from photos before storage | P1 | Privacy — GPS data in phone photos |
 | A6 | ✓ Admin role — full access to all functions | P1 | Seeded on first deploy via seed script |
 | A7 | ✓ Revoke / delete user | P1 | Admin only; invalidates all sessions |
-| A8 | Allow new signups toggle (on/off) | P2 | Admin setting; default on |
-| A9 | New users require approval toggle (on/off) | P2 | Admin setting; default on |
-| A10 | Approve new user | P2 | Admin panel action |
+| A8 | ✓ Allow new signups toggle (on/off) | P2 | Admin setting; default on |
+| A9 | ✓ New users require approval toggle (on/off) | P2 | Admin setting; default on |
+| A10 | ✓ Approve new user | P2 | Admin panel action |
 | A11 | Moderator role — can approve photos, events, handle removal requests | P3 | |
 | A12 | Assign moderator role | P3 | Admin only |
 | A13 | Invite user via email | P4 | Admin sends invite link directly |
@@ -108,7 +108,7 @@ Priority scale:
 | E6 | ✓ Photos sorted by EXIF time taken by default (oldest first) | P1 | Critical for multi-contributor events |
 | E7 | Tag events on creation | P2 | |
 | E8 | Browse / filter events by tag | P2 | |
-| E9 | Select featured image for event card | P2 | |
+| E9 | ✓ Select featured image for event card | P2 | |
 | E10 | Archive / all events list page | P3 | |
 | E11 | Users create new events (pending approval) | P3 | |
 | E12 | New user-submitted events require admin approval before visible | P3 | |
@@ -164,9 +164,9 @@ Priority scale:
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
 | AD1 | ✓ User list — view, approve, revoke, delete, assign roles | P1 | |
-| AD2 | Site settings — all toggles in one place | P2 | Signups, approval required, user uploads |
+| AD2 | ✓ Site settings — all toggles in one place | P2 | Signups, approval required, user uploads |
 | AD3 | Photo removal request queue with photo preview | P2 | Approve (delete permanently) or restore |
-| AD4 | New user approval queue | P2 | When approval-required toggle is on |
+| AD4 | ✓ New user approval queue | P2 | When approval-required toggle is on |
 | AD5 | New event approval queue | P3 | When user-submitted events enabled |
 | AD6 | New photo approval queue | P3 | When user-submitted photos enabled |
 | AD7 | Storage usage display (blob usage, photo count, DB size) | P4 | |
