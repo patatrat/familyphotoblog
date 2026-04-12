@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const publicPaths = ["/login", "/signup", "/verify"]
+const publicPaths = ["/login", "/signup", "/verify", "/pending"]
 
 // Next.js 16: middleware.ts is renamed to proxy.ts, function renamed to proxy
 export const proxy = auth(function proxy(req: NextRequest & { auth: unknown }) {
