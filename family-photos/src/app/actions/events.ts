@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
+import { setEventTags } from "@/lib/tags"
 
 export type EventFormState = { error?: string } | undefined
 
@@ -47,11 +48,15 @@ export async function updateEventAction(
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return { error: "Invalid date." }
 
+  const tagsRaw = (formData.get("tags") as string) ?? ""
+
   await db.event.update({
     where: { id },
     data: { title, date, description },
   })
+  await setEventTags(id, tagsRaw)
 
+  revalidatePath("/")
   revalidatePath(`/events/${id}`)
   revalidatePath(`/events/${id}/edit`)
   return undefined

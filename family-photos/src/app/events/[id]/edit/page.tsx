@@ -18,6 +18,7 @@ export default async function EditEventPage({
         where: { status: "VISIBLE" },
         orderBy: { sortOrder: "asc" },
       },
+      tags: { include: { tag: true } },
     },
   })
 
@@ -32,6 +33,7 @@ export default async function EditEventPage({
         description: event.description ?? "",
         status: event.status,
         featuredPhotoId: event.featuredPhotoId,
+        tags: event.tags.map((t) => t.tag.name).join(", "),
         photos: event.photos.map((p) => ({
           id: p.id,
           thumbnailUrl: p.thumbnailUrl,

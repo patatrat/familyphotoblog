@@ -17,6 +17,7 @@ type EventData = {
   title: string
   date: string
   description: string
+  tags: string
   status: "DRAFT" | "PENDING" | "PUBLISHED"
   photos: Photo[]
   featuredPhotoId: string | null
@@ -220,6 +221,24 @@ export function EventEditForm({ event }: { event: EventData }) {
                 rows={3}
                 defaultValue={event.description}
                 className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-500 resize-none"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="tags"
+                className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
+              >
+                Tags{" "}
+                <span className="text-zinc-400 font-normal">(comma-separated, optional)</span>
+              </label>
+              <input
+                id="tags"
+                name="tags"
+                type="text"
+                defaultValue={event.tags}
+                placeholder="Christmas, Family, Auckland"
+                className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500"
               />
             </div>
 
