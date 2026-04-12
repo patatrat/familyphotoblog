@@ -128,8 +128,8 @@ Priority scale:
 | PH3 | ✓ Serve thumbnails on event page, mid-size in lightbox | P1 | Thumbnails done; lightbox is PH5 |
 | PH4 | ✓ Signed/protected blob URLs — photos inaccessible without valid session | P1 | Proxied via /api/blob with session check |
 | PH5 | ✓ Full-size photo viewer — lightbox overlay with ← → navigation and X to close | P2 | |
-| PH6 | Photo removal request — hides photo immediately; admin reviews in panel | P2 | |
-| PH7 | Admin resolves removal request (delete permanently or restore) | P2 | |
+| PH6 | ✓ Photo removal request — hides photo immediately; admin reviews in panel | P2 | |
+| PH7 | ✓ Admin resolves removal request (delete permanently or restore) | P2 | |
 | PH8 | Display who took the photo (uploader attribution) | P3 | Shown under each photo |
 | PH9 | Users upload photos to existing events (pending approval) | P3 | |
 | PH10 | New user-submitted photos require approval before visible | P3 | |
@@ -165,7 +165,7 @@ Priority scale:
 |---|---------|----------|-------|
 | AD1 | ✓ User list — view, approve, revoke, delete, assign roles | P1 | |
 | AD2 | ✓ Site settings — all toggles in one place | P2 | Signups, approval required, user uploads |
-| AD3 | Photo removal request queue with photo preview | P2 | Approve (delete permanently) or restore |
+| AD3 | ✓ Photo removal request queue with photo preview | P2 | Approve (delete permanently) or restore |
 | AD4 | ✓ New user approval queue | P2 | When approval-required toggle is on |
 | AD5 | New event approval queue | P3 | When user-submitted events enabled |
 | AD6 | New photo approval queue | P3 | When user-submitted photos enabled |
