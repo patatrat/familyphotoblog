@@ -15,7 +15,11 @@ export default async function HomePage({
   const photoFields = {
     where: { status: "VISIBLE" as const },
     orderBy: { sortOrder: "asc" as const },
-    select: { id: true, thumbnailUrl: true },
+    select: {
+      id: true,
+      thumbnailUrl: true,
+      _count: { select: { comments: true, reactions: true } },
+    },
   }
   const tagInclude = { include: { tag: true } }
 
@@ -114,7 +118,7 @@ type EventWithTags = {
   title: string
   date: Date
   featuredPhotoId: string | null
-  photos: { id: string; thumbnailUrl: string }[]
+  photos: { id: string; thumbnailUrl: string; _count: { comments: number; reactions: number } }[]
   tags: { tag: { id: string; name: string; slug: string } }[]
   _count: { photos: number }
 }
@@ -173,6 +177,16 @@ function EventGrid({
               {" · "}
               {event._count.photos}{" "}
               {event._count.photos === 1 ? "photo" : "photos"}
+              {(() => {
+                const totalComments = event.photos.reduce((s, p) => s + p._count.comments, 0)
+                const totalReactions = event.photos.reduce((s, p) => s + p._count.reactions, 0)
+                return (
+                  <>
+                    {totalReactions > 0 && <>{" · "}{totalReactions} ❤️</>}
+                    {totalComments > 0 && <>{" · "}{totalComments} 💬</>}
+                  </>
+                )
+              })()}
             </p>
             {event.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">

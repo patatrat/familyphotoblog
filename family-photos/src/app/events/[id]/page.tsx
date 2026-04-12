@@ -5,6 +5,8 @@ import { PhotoGrid } from "./photo-grid"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 
+const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🙌"]
+
 export default async function EventPage({
   params,
 }: {
@@ -19,15 +21,41 @@ export default async function EventPage({
       photos: {
         where: { status: "VISIBLE" },
         orderBy: { sortOrder: "asc" },
+        include: {
+          comments: {
+            orderBy: { createdAt: "asc" },
+            include: { user: { select: { id: true, name: true } } },
+          },
+          reactions: { select: { emoji: true, userId: true } },
+        },
       },
       creator: { select: { name: true } },
     },
   })
 
   if (!event) notFound()
-
-  // Non-admins can't see drafts
   if (event.status !== "PUBLISHED" && session.user.role !== "ADMIN") notFound()
+
+  const photos = event.photos.map((p) => ({
+    id: p.id,
+    thumbnailUrl: p.thumbnailUrl,
+    midSizeUrl: p.midSizeUrl,
+    caption: p.caption,
+    comments: p.comments.map((c) => ({
+      id: c.id,
+      content: c.content,
+      createdAt: c.createdAt.toISOString(),
+      userId: c.user.id,
+      userName: c.user.name,
+    })),
+    reactions: EMOJIS.map((emoji) => ({
+      emoji,
+      count: p.reactions.filter((r) => r.emoji === emoji).length,
+      userReacted: p.reactions.some(
+        (r) => r.emoji === emoji && r.userId === session.user.id
+      ),
+    })),
+  }))
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -91,12 +119,9 @@ export default async function EventPage({
           </p>
         ) : (
           <PhotoGrid
-            photos={event.photos.map((p) => ({
-              id: p.id,
-              thumbnailUrl: p.thumbnailUrl,
-              midSizeUrl: p.midSizeUrl,
-              caption: p.caption,
-            }))}
+            photos={photos}
+            currentUserId={session.user.id}
+            isAdmin={session.user.role === "ADMIN"}
           />
         )}
       </main>
