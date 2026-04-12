@@ -164,6 +164,14 @@ model Tag {
   events EventTag[]
 }
 
+model MagicLinkRequest {
+  id         String   @id @default(cuid())
+  identifier String   // email or IP address
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, createdAt])
+}
+
 model EventTag {
   eventId String
   tagId   String
