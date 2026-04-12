@@ -1,5 +1,6 @@
 import { logoutAction } from "@/app/actions/auth"
 import type { AuthSession } from "@/lib/session"
+import { ThemeToggle } from "./theme-toggle"
 import Link from "next/link"
 
 export function Nav({ session }: { session: AuthSession }) {
@@ -29,6 +30,7 @@ export function Nav({ session }: { session: AuthSession }) {
               </Link>
             </>
           )}
+          <ThemeToggle />
           <form action={logoutAction}>
             <button
               type="submit"

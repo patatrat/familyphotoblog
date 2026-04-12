@@ -206,7 +206,7 @@ Priority scale:
 | SE1 | ✓ Security headers — CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy | P1 | Set via next.config.ts headers() |
 | SE2 | ✓ Auth-gated photo proxy — blob URLs never exposed directly to browser | P1 | /api/blob route checks session |
 | SE3 | ✓ EXIF stripping on upload | P1 | GPS data removed before storage |
-| SE4 | Rate limiting on magic link requests | P1 | Per-IP and per-email |
+| SE4 | ✓ Rate limiting on magic link requests | P1 | Per-IP and per-email |
 | SE5 | Subresource Integrity for any external scripts | P4 | None currently used |
 
 ---
@@ -215,7 +215,7 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| UI1 | Dark mode toggle | P2 | Mentioned in design notes; system preference respected by Tailwind but no manual toggle yet |
+| UI1 | ✓ Dark mode toggle | P2 | Class-based via ThemeProvider; localStorage persistence; anti-flash inline script |
 | UI2 | ✓ Photo frame favicon | P2 | PNG generated via sharp |
 | UI3 | Loading skeleton for photo grid | P3 | Improve perceived performance on slow connections |
 | UI4 | "Back to top" button on long event pages | P4 | |
