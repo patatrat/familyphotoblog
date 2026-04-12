@@ -217,7 +217,7 @@ Priority scale:
 |---|---------|----------|-------|
 | UI1 | ✓ Dark mode toggle | P2 | Class-based via ThemeProvider; localStorage persistence; anti-flash inline script |
 | UI2 | ✓ Photo frame favicon | P2 | PNG generated via sharp |
-| UI3 | Loading skeleton for photo grid | P3 | Improve perceived performance on slow connections |
+| UI3 | ✓ Loading skeleton for photo grid | P3 | Improve perceived performance on slow connections |
 | UI4 | "Back to top" button on long event pages | P4 | |
 
 ---
