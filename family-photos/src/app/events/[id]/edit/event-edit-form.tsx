@@ -34,6 +34,7 @@ export function EventEditForm({ event }: { event: EventData }) {
 
   useEffect(() => {
     if (submitted.current && !pending && !state?.error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSaved(true)
     }
   }, [pending, state])

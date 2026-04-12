@@ -9,8 +9,6 @@ import {
   toggleReactionAction,
 } from "@/app/actions/interactions"
 
-const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🙌"]
-
 type Comment = {
   id: string
   content: string
