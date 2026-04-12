@@ -63,7 +63,8 @@ export async function POST(
       put(`photos/${baseName}-mid.jpg`, midBuf, { access: "private", contentType: "image/jpeg" }),
     ])
 
-    const sortMs = takenAt ? takenAt.getTime() : Date.now()
+    // sortOrder is Int — store Unix seconds (not ms) to stay within 32-bit range
+    const sortOrder = Math.floor((takenAt ? takenAt.getTime() : Date.now()) / 1000)
 
     const photo = await db.photo.create({
       data: {
@@ -73,7 +74,7 @@ export async function POST(
         thumbnailUrl: thumb.url,
         midSizeUrl: mid.url,
         takenAt,
-        sortOrder: sortMs,
+        sortOrder,
       },
     })
 
