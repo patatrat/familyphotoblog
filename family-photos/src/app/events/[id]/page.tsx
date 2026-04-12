@@ -1,9 +1,9 @@
 import { requireApproved } from "@/lib/session"
 import { db } from "@/lib/db"
 import { Nav } from "@/components/nav"
+import { blobProxy } from "@/lib/blob-url"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
 
 export default async function EventPage({
   params,
@@ -94,14 +94,13 @@ export default async function EventPage({
             {event.photos.map((photo, i) => (
               <div
                 key={photo.id}
-                className="aspect-square relative overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800 group cursor-pointer"
+                className="aspect-square overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800 group cursor-pointer"
               >
-                <Image
-                  src={photo.thumbnailUrl}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={blobProxy(photo.thumbnailUrl)}
                   alt={photo.caption ?? `Photo ${i + 1}`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-200"
-                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
               </div>
             ))}

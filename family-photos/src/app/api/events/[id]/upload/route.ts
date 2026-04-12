@@ -58,9 +58,9 @@ export async function POST(
     ])
 
     const [original, thumb, mid] = await Promise.all([
-      put(`photos/${baseName}-orig.jpg`, originalBuf, { access: "public", contentType: "image/jpeg" }),
-      put(`photos/${baseName}-thumb.jpg`, thumbBuf, { access: "public", contentType: "image/jpeg" }),
-      put(`photos/${baseName}-mid.jpg`, midBuf, { access: "public", contentType: "image/jpeg" }),
+      put(`photos/${baseName}-orig.jpg`, originalBuf, { access: "private", contentType: "image/jpeg" }),
+      put(`photos/${baseName}-thumb.jpg`, thumbBuf, { access: "private", contentType: "image/jpeg" }),
+      put(`photos/${baseName}-mid.jpg`, midBuf, { access: "private", contentType: "image/jpeg" }),
     ])
 
     const sortMs = takenAt ? takenAt.getTime() : Date.now()

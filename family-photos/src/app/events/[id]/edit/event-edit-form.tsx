@@ -6,8 +6,8 @@ import {
   publishEventAction,
   deletePhotoAction,
 } from "@/app/actions/events"
+import { blobProxy } from "@/lib/blob-url"
 import Link from "next/link"
-import Image from "next/image"
 
 type Photo = { id: string; thumbnailUrl: string; caption: string | null }
 
@@ -276,12 +276,11 @@ export function EventEditForm({ event }: { event: EventData }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {photos.map((photo) => (
                 <div key={photo.id} className="group relative aspect-square">
-                  <Image
-                    src={photo.thumbnailUrl}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={blobProxy(photo.thumbnailUrl)}
                     alt={photo.caption ?? "Photo"}
-                    fill
-                    className="object-cover rounded-lg"
-                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                    className="w-full h-full object-cover rounded-lg"
                   />
                   <button
                     type="button"

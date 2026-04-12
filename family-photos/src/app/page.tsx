@@ -1,8 +1,8 @@
 import { requireApproved } from "@/lib/session"
 import { db } from "@/lib/db"
 import { Nav } from "@/components/nav"
+import { blobProxy } from "@/lib/blob-url"
 import Link from "next/link"
-import Image from "next/image"
 
 export default async function HomePage() {
   const session = await requireApproved()
@@ -90,12 +90,11 @@ function EventGrid({
         >
           <div className="aspect-[4/3] bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
             {event.photos[0] ? (
-              <Image
-                src={event.photos[0].thumbnailUrl}
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={blobProxy(event.photos[0].thumbnailUrl)}
                 alt={event.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-zinc-300 dark:text-zinc-600">
