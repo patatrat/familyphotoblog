@@ -234,6 +234,7 @@ Priority scale:
 | IN6 | ✓ Prisma migrations tracked in version control | P1 | |
 | IN7 | ✓ Seed script: admin user + sample events for local dev | P1 | |
 | IN8 | Playwright E2E tests for critical flows, run against staging | P2 | |
+| IN12 | Move Next.js app from family-photos/ subfolder to repo root | P1 | Update Vercel root directory (prod + staging) and GitHub Actions workflow path |
 | IN9 | Scheduled DB backup to AWS S3 (Glacier or Standard-IA) | P3 | |
 | IN10 | Scheduled Vercel Blob export/backup | P3 | |
 | IN11 | Open-source portability — storage, email, auth configurable via env vars | P4 | |
