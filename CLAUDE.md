@@ -116,6 +116,7 @@ Priority scale:
 | E14 | Reorder photos during create/edit (drag-and-drop) | P3 | |
 | E15 | Users suggest or add tags to others' events | P4 | |
 | E16 | Restrict event visibility to specific users or groups | P4 | |
+| E17 | Edit event details (title, date, description) by creator after submission | P4 | Currently PENDING events are read-only for creators |
 
 ---
 
@@ -156,6 +157,8 @@ Priority scale:
 | CR7 | Email notification when mentioned in a comment | P4 | |
 | CR8 | User setting: opt out of mention emails | P4 | |
 | CR9 | Profanity filter on comments | P4 | |
+| CR10 | Email notification to uploader when their submitted photo is approved or rejected | P4 | |
+| CR11 | Email notification to submitter when their event is approved or rejected | P4 | |
 
 ---
 
@@ -219,6 +222,8 @@ Priority scale:
 | UI2 | ✓ Photo frame favicon | P2 | PNG generated via sharp |
 | UI3 | ✓ Loading skeleton for photo grid | P3 | Improve perceived performance on slow connections |
 | UI4 | "Back to top" button on long event pages | P4 | |
+| UI5 | Thumbnail blur-up placeholder (base64 LQIP) | P4 | Further reduce perceived load time for photo grid |
+| UI6 | Pull-to-refresh on mobile | P4 | |
 
 ---
 
@@ -235,6 +240,7 @@ Priority scale:
 | IN7 | ✓ Seed script: admin user + sample events for local dev | P1 | |
 | IN8 | Playwright E2E tests for critical flows, run against staging | P2 | |
 | IN12 | ✓ Move Next.js app from family-photos/ subfolder to repo root | P1 | Update Vercel root directory (prod + staging) and GitHub Actions workflow path |
+| IN13 | ✓ `prisma migrate deploy` runs automatically on every Vercel build | P1 | Added to npm build script |
 | IN9 | Scheduled DB backup to AWS S3 (Glacier or Standard-IA) | P3 | |
 | IN10 | Scheduled Vercel Blob export/backup | P3 | |
 | IN11 | Open-source portability — storage, email, auth configurable via env vars | P4 | |
@@ -362,16 +368,24 @@ model EventTag {
 
 ## Current Status
 
-All P1 and P2 features are complete. The site is ready for a broader family invite. Active development is now on P3 features.
+All P1 and P2 features complete. All originally planned P3 features now complete except E10, EM3/EM4, PH8, IN8, IN9/IN10. Site is live with a broader family invite underway.
+
+### Infrastructure notes
+- `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
+- `family-photos/` subfolder fully removed; repo root is the Next.js app
+- Dark mode: class-based via ThemeProvider + localStorage, anti-flash inline script, defaults to system preference
 
 ### Remaining P2
 - IN8 — Playwright E2E tests against staging
 
-### P3 priorities (suggested order)
-1. UI1 — Dark mode toggle
-2. EM3/EM4 — Email notification on new event publish
-3. PH8 — Uploader attribution shown in lightbox
-4. E10 — Archive / all events page
-5. E11/E12 + AD5 — User-submitted events with admin approval queue
-6. PH9/PH10 + AD6 — User-submitted photos with approval queue
-7. IN9/IN10 — Scheduled DB and Blob backups
+### Remaining P3 (suggested order)
+1. EM3/EM4 — Email notification on new event publish
+2. PH8 — Uploader attribution shown in lightbox
+3. E10 — Archive / all events page
+4. IN9/IN10 — Scheduled DB and Blob backups
+
+### Recently completed P3
+- UI1 ✓ — Dark mode toggle (class-based, localStorage persistence)
+- UI3 ✓ — Loading skeletons for home and event pages + image fade-in
+- E11/E12 + AD5 ✓ — User-submitted events with approval queue
+- PH9/PH10 + AD6 ✓ — User-submitted photos with approval queue

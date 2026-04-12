@@ -21,10 +21,3 @@ export async function updateSettingsAction(formData: FormData) {
   revalidatePath("/admin")
   revalidatePath("/admin/settings")
 }
-
-export async function approveUserAction(formData: FormData) {
-  await requireAdmin()
-  const userId = formData.get("userId") as string
-  await db.user.update({ where: { id: userId }, data: { approved: true } })
-  revalidatePath("/admin")
-}
