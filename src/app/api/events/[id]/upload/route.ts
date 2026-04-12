@@ -14,13 +14,28 @@ export async function POST(
 
     // Check auth directly — don't use requireAdmin() since redirect() throws in route handlers
     const session = await auth()
-    const role = (session?.user as { role?: string } | undefined)?.role
-    if (!session?.user || role !== "ADMIN") {
+    const user = session?.user as { id?: string; role?: string; approved?: boolean } | undefined
+    if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const isAdmin = user.role === "ADMIN"
+    if (!isAdmin && !user.approved) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { getSettings } = await import("@/lib/settings")
+    if (!isAdmin) {
+      const settings = await getSettings()
+      if (!settings.userPhotosEnabled) {
+        return NextResponse.json({ error: "Photo uploads are not enabled." }, { status: 403 })
+      }
     }
 
     const event = await db.event.findUnique({ where: { id: eventId } })
     if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
+    }
+    if (event.status !== "PUBLISHED" && !isAdmin) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
@@ -69,16 +84,21 @@ export async function POST(
     const photo = await db.photo.create({
       data: {
         eventId,
-        uploadedBy: session.user.id!,
+        uploadedBy: user.id,
         blobUrl: original.url,
         thumbnailUrl: thumb.url,
         midSizeUrl: mid.url,
         takenAt,
         sortOrder,
+        status: isAdmin ? "VISIBLE" : "PENDING",
       },
     })
 
-    return NextResponse.json({ photoId: photo.id, thumbnailUrl: photo.thumbnailUrl })
+    return NextResponse.json({
+      photoId: photo.id,
+      thumbnailUrl: photo.thumbnailUrl,
+      pending: !isAdmin,
+    })
   } catch (err) {
     console.error("[upload] error:", err)
     const message = err instanceof Error ? err.message : "Unknown error"

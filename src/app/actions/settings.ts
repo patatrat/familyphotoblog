@@ -9,11 +9,13 @@ export async function updateSettingsAction(formData: FormData) {
 
   const signupsEnabled = formData.get("signupsEnabled") === "true"
   const approvalRequired = formData.get("approvalRequired") === "true"
+  const userEventsEnabled = formData.get("userEventsEnabled") === "true"
+  const userPhotosEnabled = formData.get("userPhotosEnabled") === "true"
 
   await db.siteSettings.upsert({
     where: { id: "global" },
-    update: { signupsEnabled, approvalRequired },
-    create: { id: "global", signupsEnabled, approvalRequired },
+    update: { signupsEnabled, approvalRequired, userEventsEnabled, userPhotosEnabled },
+    create: { id: "global", signupsEnabled, approvalRequired, userEventsEnabled, userPhotosEnabled },
   })
 
   revalidatePath("/admin")

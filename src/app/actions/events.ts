@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
-import { requireAdmin } from "@/lib/session"
+import { requireApproved, requireAdmin } from "@/lib/session"
+import { getSettings } from "@/lib/settings"
 import { setEventTags } from "@/lib/tags"
 
 export type EventFormState = { error?: string } | undefined
@@ -12,7 +13,13 @@ export async function createEventAction(
   prevState: EventFormState,
   formData: FormData
 ): Promise<EventFormState> {
-  const session = await requireAdmin()
+  const session = await requireApproved()
+  const isAdmin = session.user.role === "ADMIN"
+
+  if (!isAdmin) {
+    const settings = await getSettings()
+    if (!settings.userEventsEnabled) return { error: "Event submissions are not enabled." }
+  }
 
   const title = (formData.get("title") as string)?.trim()
   const dateStr = formData.get("date") as string
@@ -25,10 +32,20 @@ export async function createEventAction(
   if (isNaN(date.getTime())) return { error: "Invalid date." }
 
   const event = await db.event.create({
-    data: { title, date, description, createdBy: session.user.id },
+    data: {
+      title,
+      date,
+      description,
+      createdBy: session.user.id,
+      status: isAdmin ? "DRAFT" : "PENDING",
+    },
   })
 
-  redirect(`/events/${event.id}/edit`)
+  if (isAdmin) {
+    redirect(`/events/${event.id}/edit`)
+  } else {
+    redirect("/?submitted=event")
+  }
 }
 
 export async function updateEventAction(

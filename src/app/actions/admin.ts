@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { del } from "@vercel/blob"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
@@ -43,4 +44,42 @@ export async function setRoleAction(formData: FormData) {
 
   await db.user.update({ where: { id: userId }, data: { role } })
   revalidatePath("/admin")
+}
+
+// ─── Pending event actions ────────────────────────────────────────────────────
+
+export async function approveEventAction(eventId: string): Promise<void> {
+  await requireAdmin()
+  await db.event.update({ where: { id: eventId }, data: { status: "DRAFT" } })
+  revalidatePath("/admin")
+  revalidatePath("/")
+}
+
+export async function rejectEventAction(eventId: string): Promise<void> {
+  await requireAdmin()
+  await db.event.delete({ where: { id: eventId } })
+  revalidatePath("/admin")
+  revalidatePath("/")
+}
+
+// ─── Pending photo actions ────────────────────────────────────────────────────
+
+export async function approvePhotoAction(photoId: string): Promise<void> {
+  await requireAdmin()
+  const photo = await db.photo.update({
+    where: { id: photoId },
+    data: { status: "VISIBLE" },
+  })
+  revalidatePath("/admin")
+  revalidatePath(`/events/${photo.eventId}`)
+}
+
+export async function rejectPhotoAction(photoId: string): Promise<void> {
+  await requireAdmin()
+  const photo = await db.photo.findUnique({ where: { id: photoId } })
+  if (!photo) return
+  await del([photo.blobUrl, photo.thumbnailUrl, photo.midSizeUrl])
+  await db.photo.delete({ where: { id: photoId } })
+  revalidatePath("/admin")
+  revalidatePath(`/events/${photo.eventId}`)
 }

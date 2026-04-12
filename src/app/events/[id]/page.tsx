@@ -1,7 +1,9 @@
 import { requireApproved } from "@/lib/session"
+import { getSettings } from "@/lib/settings"
 import { db } from "@/lib/db"
 import { Nav } from "@/components/nav"
 import { PhotoGrid } from "./photo-grid"
+import { UserPhotoUpload } from "@/components/user-photo-upload"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 
@@ -14,6 +16,8 @@ export default async function EventPage({
 }) {
   const { id } = await params
   const session = await requireApproved()
+  const isAdmin = session.user.role === "ADMIN"
+  const settings = await getSettings()
 
   const event = await db.event.findUnique({
     where: { id },
@@ -34,7 +38,7 @@ export default async function EventPage({
   })
 
   if (!event) notFound()
-  if (event.status !== "PUBLISHED" && session.user.role !== "ADMIN") notFound()
+  if (event.status !== "PUBLISHED" && !isAdmin) notFound()
 
   const photos = event.photos.map((p) => ({
     id: p.id,
@@ -102,7 +106,7 @@ export default async function EventPage({
               )}
             </div>
 
-            {session.user.role === "ADMIN" && (
+            {isAdmin && (
               <Link
                 href={`/events/${id}/edit`}
                 className="shrink-0 text-sm px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -121,8 +125,12 @@ export default async function EventPage({
           <PhotoGrid
             photos={photos}
             currentUserId={session.user.id}
-            isAdmin={session.user.role === "ADMIN"}
+            isAdmin={isAdmin}
           />
+        )}
+
+        {!isAdmin && settings.userPhotosEnabled && event.status === "PUBLISHED" && (
+          <UserPhotoUpload eventId={id} />
         )}
       </main>
     </div>

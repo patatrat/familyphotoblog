@@ -183,7 +183,9 @@ model EventTag {
 
 // Single-row site-wide settings (id = "global")
 model SiteSettings {
-  id               String  @id @default("global")
-  signupsEnabled   Boolean @default(true)
-  approvalRequired Boolean @default(true)
+  id                String  @id @default("global")
+  signupsEnabled    Boolean @default(true)
+  approvalRequired  Boolean @default(true)
+  userEventsEnabled Boolean @default(false)
+  userPhotosEnabled Boolean @default(false)
 }

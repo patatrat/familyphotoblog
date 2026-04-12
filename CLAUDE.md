@@ -110,8 +110,8 @@ Priority scale:
 | E8 | ✓ Browse / filter events by tag | P2 | |
 | E9 | ✓ Select featured image for event card | P2 | |
 | E10 | Archive / all events list page | P3 | |
-| E11 | Users create new events (pending approval) | P3 | |
-| E12 | New user-submitted events require admin approval before visible | P3 | |
+| E11 | ✓ Users create new events (pending approval) | P3 | |
+| E12 | ✓ New user-submitted events require admin approval before visible | P3 | |
 | E13 | Bulk photo upload to event | P3 | |
 | E14 | Reorder photos during create/edit (drag-and-drop) | P3 | |
 | E15 | Users suggest or add tags to others' events | P4 | |
@@ -131,8 +131,8 @@ Priority scale:
 | PH6 | ✓ Photo removal request — hides photo immediately; admin reviews in panel | P2 | |
 | PH7 | ✓ Admin resolves removal request (delete permanently or restore) | P2 | |
 | PH8 | Display who took the photo (uploader attribution) | P3 | Shown under each photo |
-| PH9 | Users upload photos to existing events (pending approval) | P3 | |
-| PH10 | New user-submitted photos require approval before visible | P3 | |
+| PH9 | ✓ Users upload photos to existing events (pending approval) | P3 | |
+| PH10 | ✓ New user-submitted photos require approval before visible | P3 | |
 | PH11 | Download original photo (full-res, requires auth) | P3 | |
 | PH12 | Add caption to photo on upload / edit | P3 | |
 | PH13 | Duplicate photo detection | P4 | Hash comparison on upload |
@@ -167,8 +167,8 @@ Priority scale:
 | AD2 | ✓ Site settings — all toggles in one place | P2 | Signups, approval required, user uploads |
 | AD3 | ✓ Photo removal request queue with photo preview | P2 | Approve (delete permanently) or restore |
 | AD4 | ✓ New user approval queue | P2 | When approval-required toggle is on |
-| AD5 | New event approval queue | P3 | When user-submitted events enabled |
-| AD6 | New photo approval queue | P3 | When user-submitted photos enabled |
+| AD5 | ✓ New event approval queue | P3 | When user-submitted events enabled |
+| AD6 | ✓ New photo approval queue | P3 | When user-submitted photos enabled |
 | AD7 | Storage usage display (blob usage, photo count, DB size) | P4 | |
 | AD8 | Usage stats — most viewed photo/event, active users | P4 | |
 

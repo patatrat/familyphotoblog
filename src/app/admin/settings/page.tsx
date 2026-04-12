@@ -38,6 +38,18 @@ export default async function AdminSettingsPage() {
             name="approvalRequired"
             value={settings.approvalRequired}
           />
+          <ToggleRow
+            label="User event submissions"
+            description="Allow approved family members to submit new events for admin review."
+            name="userEventsEnabled"
+            value={settings.userEventsEnabled}
+          />
+          <ToggleRow
+            label="User photo uploads"
+            description="Allow approved family members to add photos to published events. Photos are held for admin approval before becoming visible."
+            name="userPhotosEnabled"
+            value={settings.userPhotosEnabled}
+          />
           <div className="px-6 py-4">
             <button
               type="submit"

@@ -7,9 +7,9 @@ import Link from "next/link"
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string }>
+  searchParams: Promise<{ tag?: string; submitted?: string }>
 }) {
-  const { tag } = await searchParams
+  const { tag, submitted } = await searchParams
   const session = await requireApproved()
 
   const photoFields = {
@@ -37,19 +37,32 @@ export default async function HomePage({
     },
   })
 
-  // Admins also see their own drafts (unaffected by tag filter)
-  const drafts =
-    session.user.role === "ADMIN"
-      ? await db.event.findMany({
-          where: { status: "DRAFT" },
-          orderBy: { date: "desc" },
-          include: {
-            photos: photoFields,
-            tags: tagInclude,
-            _count: { select: { photos: { where: { status: "VISIBLE" } } } },
-          },
-        })
-      : []
+  const isAdmin = session.user.role === "ADMIN"
+
+  // Admins see all drafts; non-admins see their own PENDING events
+  const drafts = isAdmin
+    ? await db.event.findMany({
+        where: { status: "DRAFT" },
+        orderBy: { date: "desc" },
+        include: {
+          photos: photoFields,
+          tags: tagInclude,
+          _count: { select: { photos: { where: { status: "VISIBLE" } } } },
+        },
+      })
+    : []
+
+  const myPending = !isAdmin
+    ? await db.event.findMany({
+        where: { status: "PENDING", createdBy: session.user.id },
+        orderBy: { date: "desc" },
+        include: {
+          photos: photoFields,
+          tags: tagInclude,
+          _count: { select: { photos: { where: { status: "VISIBLE" } } } },
+        },
+      })
+    : []
 
   // All tags used in published events for the filter bar
   const allTags = await db.tag.findMany({
@@ -62,6 +75,13 @@ export default async function HomePage({
       <Nav session={session} />
 
       <main className="max-w-5xl mx-auto px-4 py-10">
+
+        {/* Submission confirmation banner */}
+        {submitted === "event" && (
+          <div className="mb-6 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300">
+            Your event has been submitted for review. An admin will approve it shortly.
+          </div>
+        )}
 
         {/* Tag filter bar */}
         {allTags.length > 0 && (
@@ -101,7 +121,16 @@ export default async function HomePage({
           </section>
         )}
 
-        {events.length === 0 && drafts.length === 0 ? (
+        {myPending.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-4">
+              Pending approval
+            </h2>
+            <EventGrid events={myPending} isPending />
+          </section>
+        )}
+
+        {events.length === 0 && drafts.length === 0 && myPending.length === 0 ? (
           <p className="text-center text-zinc-400 dark:text-zinc-500 py-20">
             {tag ? `No events tagged "${tag}".` : "No events yet."}
           </p>
@@ -126,9 +155,11 @@ type EventWithTags = {
 function EventGrid({
   events,
   isDraft,
+  isPending,
 }: {
   events: EventWithTags[]
   isDraft?: boolean
+  isPending?: boolean
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,7 +167,11 @@ function EventGrid({
         <Link
           key={event.id}
           href={isDraft ? `/events/${event.id}/edit` : `/events/${event.id}`}
-          className="group block bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+          className={`group block bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border transition-colors ${
+            isPending
+              ? "border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 pointer-events-none"
+              : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
+          }`}
         >
           <div className="aspect-[4/3] bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
             {event.photos[0] ? (
@@ -161,6 +196,11 @@ function EventGrid({
             {isDraft && (
               <span className="absolute top-2 left-2 text-xs bg-zinc-900/70 text-white px-2 py-0.5 rounded">
                 Draft
+              </span>
+            )}
+            {isPending && (
+              <span className="absolute top-2 left-2 text-xs bg-amber-500/90 text-white px-2 py-0.5 rounded">
+                Pending approval
               </span>
             )}
           </div>
