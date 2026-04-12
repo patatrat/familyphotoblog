@@ -180,3 +180,10 @@ model EventTag {
 
   @@id([eventId, tagId])
 }
+
+// Single-row site-wide settings (id = "global")
+model SiteSettings {
+  id               String  @id @default("global")
+  signupsEnabled   Boolean @default(true)
+  approvalRequired Boolean @default(true)
+}

@@ -31,6 +31,7 @@ export default async function EditEventPage({
         date: event.date.toISOString().split("T")[0],
         description: event.description ?? "",
         status: event.status,
+        featuredPhotoId: event.featuredPhotoId,
         photos: event.photos.map((p) => ({
           id: p.id,
           thumbnailUrl: p.thumbnailUrl,

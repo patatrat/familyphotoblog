@@ -78,3 +78,16 @@ export async function deletePhotoAction(photoId: string, eventId: string): Promi
   revalidatePath(`/events/${eventId}/edit`)
   revalidatePath(`/events/${eventId}`)
 }
+
+export async function setFeaturedPhotoAction(eventId: string, photoId: string): Promise<void> {
+  await requireAdmin()
+
+  await db.event.update({
+    where: { id: eventId },
+    data: { featuredPhotoId: photoId },
+  })
+
+  revalidatePath("/")
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath(`/events/${eventId}/edit`)
+}

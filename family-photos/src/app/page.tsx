@@ -7,16 +7,17 @@ import Link from "next/link"
 export default async function HomePage() {
   const session = await requireApproved()
 
+  const photoFields = {
+    where: { status: "VISIBLE" as const },
+    orderBy: { sortOrder: "asc" as const },
+    select: { id: true, thumbnailUrl: true },
+  }
+
   const events = await db.event.findMany({
     where: { status: "PUBLISHED" },
     orderBy: { date: "desc" },
     include: {
-      photos: {
-        where: { status: "VISIBLE" },
-        orderBy: { sortOrder: "asc" },
-        take: 1,
-        select: { thumbnailUrl: true },
-      },
+      photos: photoFields,
       _count: { select: { photos: { where: { status: "VISIBLE" } } } },
     },
   })
@@ -28,12 +29,7 @@ export default async function HomePage() {
           where: { status: "DRAFT" },
           orderBy: { date: "desc" },
           include: {
-            photos: {
-              where: { status: "VISIBLE" },
-              orderBy: { sortOrder: "asc" },
-              take: 1,
-              select: { thumbnailUrl: true },
-            },
+            photos: photoFields,
             _count: { select: { photos: { where: { status: "VISIBLE" } } } },
           },
         })
@@ -69,7 +65,8 @@ type EventWithCount = {
   id: string
   title: string
   date: Date
-  photos: { thumbnailUrl: string }[]
+  featuredPhotoId: string | null
+  photos: { id: string; thumbnailUrl: string }[]
   _count: { photos: number }
 }
 
@@ -92,7 +89,12 @@ function EventGrid({
             {event.photos[0] ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={blobProxy(event.photos[0].thumbnailUrl)}
+                src={blobProxy(
+                  (event.featuredPhotoId
+                    ? event.photos.find((p) => p.id === event.featuredPhotoId)
+                    : undefined
+                  )?.thumbnailUrl ?? event.photos[0].thumbnailUrl
+                )}
                 alt={event.title}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />

@@ -5,6 +5,7 @@ import {
   updateEventAction,
   publishEventAction,
   deletePhotoAction,
+  setFeaturedPhotoAction,
 } from "@/app/actions/events"
 import { blobProxy } from "@/lib/blob-url"
 import Link from "next/link"
@@ -18,11 +19,13 @@ type EventData = {
   description: string
   status: "DRAFT" | "PENDING" | "PUBLISHED"
   photos: Photo[]
+  featuredPhotoId: string | null
 }
 
 export function EventEditForm({ event }: { event: EventData }) {
   const [state, action, pending] = useActionState(updateEventAction, undefined)
   const [photos, setPhotos] = useState<Photo[]>(event.photos)
+  const [featuredPhotoId, setFeaturedPhotoId] = useState<string | null>(event.featuredPhotoId)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -97,6 +100,15 @@ export function EventEditForm({ event }: { event: EventData }) {
       if (!confirm("Delete this photo?")) return
       await deletePhotoAction(photoId, event.id)
       setPhotos((prev) => prev.filter((p) => p.id !== photoId))
+      if (featuredPhotoId === photoId) setFeaturedPhotoId(null)
+    },
+    [event.id, featuredPhotoId]
+  )
+
+  const handleSetFeatured = useCallback(
+    async (photoId: string) => {
+      await setFeaturedPhotoAction(event.id, photoId)
+      setFeaturedPhotoId(photoId)
     },
     [event.id]
   )
@@ -274,24 +286,50 @@ export function EventEditForm({ event }: { event: EventData }) {
 
           {photos.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {photos.map((photo) => (
-                <div key={photo.id} className="group relative aspect-square">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={blobProxy(photo.thumbnailUrl)}
-                    alt={photo.caption ?? "Photo"}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(photo.id)}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs hidden group-hover:flex items-center justify-center hover:bg-red-600 transition-colors"
-                    aria-label="Delete photo"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+              {photos.map((photo) => {
+                const isCover = photo.id === featuredPhotoId
+                return (
+                  <div key={photo.id} className="group relative aspect-square">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={blobProxy(photo.thumbnailUrl)}
+                      alt={photo.caption ?? "Photo"}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+
+                    {/* Cover badge */}
+                    {isCover && (
+                      <span className="absolute bottom-1 left-1 text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded font-medium pointer-events-none">
+                        Cover
+                      </span>
+                    )}
+
+                    {/* Hover controls */}
+                    <div className="absolute inset-0 rounded-lg hidden group-hover:flex flex-col items-end justify-between p-1 bg-black/10">
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(photo.id)}
+                        className="w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
+                        aria-label="Delete photo"
+                      >
+                        ×
+                      </button>
+
+                      {/* Set as cover */}
+                      {!isCover && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetFeatured(photo.id)}
+                          className="text-xs bg-black/60 text-white px-1.5 py-0.5 rounded hover:bg-amber-500 transition-colors"
+                        >
+                          Set cover
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </section>

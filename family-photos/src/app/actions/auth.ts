@@ -3,6 +3,7 @@
 import { signIn, signOut } from "@/auth"
 import { db } from "@/lib/db"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { getSettings } from "@/lib/settings"
 
 export type AuthFormState = { error?: string } | undefined
 
@@ -42,6 +43,11 @@ export async function signupAction(
     return { error: "Incorrect family passphrase." }
   }
 
+  const settings = await getSettings()
+  if (!settings.signupsEnabled) {
+    return { error: "Signups are currently closed." }
+  }
+
   const { limited, message } = await checkRateLimit(email)
   if (limited) return { error: message }
 
@@ -52,7 +58,8 @@ export async function signupAction(
     }
   }
 
-  await db.user.create({ data: { name, email, approved: true } })
+  // Auto-approve only when approval is not required
+  await db.user.create({ data: { name, email, approved: !settings.approvalRequired } })
 
   // Throws NEXT_REDIRECT to /verify — Next.js handles it
   await signIn("nodemailer", { email })
