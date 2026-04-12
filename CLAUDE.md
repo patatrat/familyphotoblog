@@ -79,13 +79,13 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| A1 | Magic link signup — name + email + family passphrase → email link → logged in | P1 | Via Auth.js; passphrase checked server-side |
-| A2 | Magic link login — email only → link → logged in | P1 | |
-| A3 | Persistent session until explicit logout | P1 | |
-| A4 | Rate limiting on magic link requests | P1 | Per-IP and per-email; prevent email spam abuse |
-| A5 | EXIF stripping from photos before storage | P1 | Privacy — GPS data in phone photos |
-| A6 | Admin role — full access to all functions | P1 | Seeded on first deploy via seed script |
-| A7 | Revoke / delete user | P1 | Admin only; invalidates all sessions |
+| A1 | ✓ Magic link signup — name + email + family passphrase → email link → logged in | P1 | Via Auth.js; passphrase checked server-side |
+| A2 | ✓ Magic link login — email only → link → logged in | P1 | |
+| A3 | ✓ Persistent session until explicit logout | P1 | |
+| A4 | ✓ Rate limiting on magic link requests | P1 | Per-IP and per-email; prevent email spam abuse |
+| A5 | ✓ EXIF stripping from photos before storage | P1 | Privacy — GPS data in phone photos |
+| A6 | ✓ Admin role — full access to all functions | P1 | Seeded on first deploy via seed script |
+| A7 | ✓ Revoke / delete user | P1 | Admin only; invalidates all sessions |
 | A8 | Allow new signups toggle (on/off) | P2 | Admin setting; default on |
 | A9 | New users require approval toggle (on/off) | P2 | Admin setting; default on |
 | A10 | Approve new user | P2 | Admin panel action |
@@ -100,12 +100,12 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| E1 | Create event with title, date, description | P1 | |
-| E2 | Event defaults to draft on creation | P1 | Only admin/creator can see drafts |
-| E3 | Publish event (makes it visible to all users) | P1 | |
-| E4 | Home page event card: title, date, photo count, featured photo thumbnail | P1 | |
-| E5 | Click card → open event page | P1 | |
-| E6 | Photos sorted by EXIF time taken by default (oldest first) | P1 | Critical for multi-contributor events |
+| E1 | ✓ Create event with title, date, description | P1 | |
+| E2 | ✓ Event defaults to draft on creation | P1 | Only admin/creator can see drafts |
+| E3 | ✓ Publish event (makes it visible to all users) | P1 | |
+| E4 | ✓ Home page event card: title, date, photo count, featured photo thumbnail | P1 | |
+| E5 | ✓ Click card → open event page | P1 | |
+| E6 | ✓ Photos sorted by EXIF time taken by default (oldest first) | P1 | Critical for multi-contributor events |
 | E7 | Tag events on creation | P2 | |
 | E8 | Browse / filter events by tag | P2 | |
 | E9 | Select featured image for event card | P2 | |
@@ -123,10 +123,10 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| PH1 | Upload photos to event (admin/creator) | P1 | |
-| PH2 | Server-side processing on upload: EXIF strip, thumbnail (400px), mid-size (1200px) | P1 | Using sharp |
-| PH3 | Serve thumbnails on event page, mid-size in lightbox | P1 | Original never served to browsers |
-| PH4 | Signed/protected blob URLs — photos inaccessible without valid session | P1 | |
+| PH1 | ✓ Upload photos to event (admin/creator) | P1 | |
+| PH2 | ✓ Server-side processing on upload: EXIF strip, thumbnail (400px), mid-size (1200px) | P1 | Using sharp |
+| PH3 | ✓ Serve thumbnails on event page, mid-size in lightbox | P1 | Thumbnails done; lightbox is PH5 |
+| PH4 | ✓ Signed/protected blob URLs — photos inaccessible without valid session | P1 | Proxied via /api/blob with session check |
 | PH5 | Full-size photo viewer — lightbox overlay with ← → navigation and X to close | P2 | |
 | PH6 | Photo removal request — hides photo immediately; admin reviews in panel | P2 | |
 | PH7 | Admin resolves removal request (delete permanently or restore) | P2 | |
@@ -163,7 +163,7 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| AD1 | User list — view, approve, revoke, delete, assign roles | P1 | |
+| AD1 | ✓ User list — view, approve, revoke, delete, assign roles | P1 | |
 | AD2 | Site settings — all toggles in one place | P2 | Signups, approval required, user uploads |
 | AD3 | Photo removal request queue with photo preview | P2 | Approve (delete permanently) or restore |
 | AD4 | New user approval queue | P2 | When approval-required toggle is on |
@@ -178,8 +178,8 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| EM1 | Magic link email — signup | P1 | |
-| EM2 | Magic link email — login | P1 | |
+| EM1 | ✓ Magic link email — signup | P1 | |
+| EM2 | ✓ Magic link email — login | P1 | |
 | EM3 | Email sent when new event is published | P3 | |
 | EM4 | User setting: opt out of new event emails (opt-in default) | P3 | |
 | EM5 | Email when mentioned in a comment | P4 | |
@@ -203,13 +203,13 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| IN1 | GitHub branch protection on `main` — PRs required, no direct push | P1 | |
-| IN2 | `staging` branch → separate Vercel project at `staging.photos.radomski.co.nz` | P1 | |
-| IN3 | CI: lint, type-check, unit tests on every PR via GitHub Actions | P1 | |
-| IN4 | Vitest + React Testing Library (unit/component tests) | P1 | |
-| IN5 | `.env.example` with all vars documented | P1 | |
-| IN6 | Prisma migrations tracked in version control | P1 | |
-| IN7 | Seed script: admin user + sample events for local dev | P1 | |
+| IN1 | ✓ GitHub branch protection on `main` — PRs required, no direct push | P1 | |
+| IN2 | ✓ `staging` branch → separate Vercel project at `staging.photos.radomski.co.nz` | P1 | |
+| IN3 | ✓ CI: lint, type-check, unit tests on every PR via GitHub Actions | P1 | |
+| IN4 | ✓ Vitest + React Testing Library (unit/component tests) | P1 | |
+| IN5 | ✓ `.env.example` with all vars documented | P1 | |
+| IN6 | ✓ Prisma migrations tracked in version control | P1 | |
+| IN7 | ✓ Seed script: admin user + sample events for local dev | P1 | |
 | IN8 | Playwright E2E tests for critical flows, run against staging | P2 | |
 | IN9 | Scheduled DB backup to AWS S3 (Glacier or Standard-IA) | P3 | |
 | IN10 | Scheduled Vercel Blob export/backup | P3 | |
