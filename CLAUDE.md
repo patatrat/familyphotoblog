@@ -106,8 +106,8 @@ Priority scale:
 | E4 | ✓ Home page event card: title, date, photo count, featured photo thumbnail | P1 | |
 | E5 | ✓ Click card → open event page | P1 | |
 | E6 | ✓ Photos sorted by EXIF time taken by default (oldest first) | P1 | Critical for multi-contributor events |
-| E7 | Tag events on creation | P2 | |
-| E8 | Browse / filter events by tag | P2 | |
+| E7 | ✓ Tag events on creation | P2 | |
+| E8 | ✓ Browse / filter events by tag | P2 | |
 | E9 | ✓ Select featured image for event card | P2 | |
 | E10 | Archive / all events list page | P3 | |
 | E11 | Users create new events (pending approval) | P3 | |
@@ -147,10 +147,10 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| CR1 | Per-photo comments — show author, timestamp, content | P3 | |
-| CR2 | Delete comment | P3 | Admin/moderator only |
-| CR3 | Per-photo emoji reactions with counts | P3 | Facebook-style |
-| CR4 | Display total comment count and reaction count on event card | P3 | |
+| CR1 | ✓ Per-photo comments — show author, timestamp, content | P3 | |
+| CR2 | ✓ Delete comment | P3 | Admin only |
+| CR3 | ✓ Per-photo emoji reactions with counts | P3 | 6 emoji, optimistic toggle |
+| CR4 | ✓ Display total comment count and reaction count on event card | P3 | |
 | CR5 | Hover emoji to see list of users who reacted | P4 | |
 | CR6 | Tag other users in comments with @name | P4 | |
 | CR7 | Email notification when mentioned in a comment | P4 | |
@@ -191,11 +191,34 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| TG1 | Creator tags events | P2 | |
-| TG2 | Browse / filter events by tag | P2 | |
+| TG1 | ✓ Creator tags events | P2 | |
+| TG2 | ✓ Browse / filter events by tag | P2 | |
 | TG3 | Users suggest tags on others' events | P4 | |
 | TG4 | Tag photos | P4 | |
 | TG5 | Tag people (users) in photos | P4 | |
+
+---
+
+### Security
+
+| # | Feature | Priority | Notes |
+|---|---------|----------|-------|
+| SE1 | ✓ Security headers — CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy | P1 | Set via next.config.ts headers() |
+| SE2 | ✓ Auth-gated photo proxy — blob URLs never exposed directly to browser | P1 | /api/blob route checks session |
+| SE3 | ✓ EXIF stripping on upload | P1 | GPS data removed before storage |
+| SE4 | Rate limiting on magic link requests | P1 | Per-IP and per-email |
+| SE5 | Subresource Integrity for any external scripts | P4 | None currently used |
+
+---
+
+### UI / Design
+
+| # | Feature | Priority | Notes |
+|---|---------|----------|-------|
+| UI1 | Dark mode toggle | P2 | Mentioned in design notes; system preference respected by Tailwind but no manual toggle yet |
+| UI2 | ✓ Photo frame favicon | P2 | PNG generated via sharp |
+| UI3 | Loading skeleton for photo grid | P3 | Improve perceived performance on slow connections |
+| UI4 | "Back to top" button on long event pages | P4 | |
 
 ---
 
@@ -336,24 +359,18 @@ model EventTag {
 
 ---
 
-## Next Steps (in order)
+## Current Status
 
-1. Create GitHub repo — initialise with Next.js (TypeScript + Tailwind + App Router):
-   ```bash
-   npx create-next-app@latest family-photos --typescript --tailwind --app --src-dir
-   ```
-2. Install core dependencies:
-   ```bash
-   npm install prisma @prisma/client @auth/core next-auth @vercel/blob sharp nodemailer
-   npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom playwright
-   ```
-3. Set up Prisma: `npx prisma init` → paste schema above → `npx prisma migrate dev --name init`
-4. Configure GitHub branch protection on `main`; create `staging` branch
-5. Add GitHub Actions CI workflow (lint + typecheck + vitest on PR)
-6. Create two Vercel projects: prod (main branch) and staging (staging branch)
-7. Set all env vars in both Vercel projects and locally in `.env.local`
-8. Implement Auth.js magic link flow end-to-end (A1–A4)
-9. Implement event creation + photo upload with sharp pipeline (E1–E6, PH1–PH4)
-10. Implement admin user management panel (AD1)
-11. Deploy to staging → smoke test with real email flow → invite 2–3 family members for feedback
-12. Begin P2 work based on feedback
+All P1 and P2 features are complete. The site is ready for a broader family invite. Active development is now on P3 features.
+
+### Remaining P2
+- IN8 — Playwright E2E tests against staging
+
+### P3 priorities (suggested order)
+1. UI1 — Dark mode toggle
+2. EM3/EM4 — Email notification on new event publish
+3. PH8 — Uploader attribution shown in lightbox
+4. E10 — Archive / all events page
+5. E11/E12 + AD5 — User-submitted events with admin approval queue
+6. PH9/PH10 + AD6 — User-submitted photos with approval queue
+7. IN9/IN10 — Scheduled DB and Blob backups
