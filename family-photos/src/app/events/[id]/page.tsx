@@ -1,7 +1,7 @@
 import { requireApproved } from "@/lib/session"
 import { db } from "@/lib/db"
 import { Nav } from "@/components/nav"
-import { blobProxy } from "@/lib/blob-url"
+import { PhotoGrid } from "./photo-grid"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 
@@ -90,21 +90,14 @@ export default async function EventPage({
             No photos yet.
           </p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {event.photos.map((photo, i) => (
-              <div
-                key={photo.id}
-                className="aspect-square overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800 group cursor-pointer"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={blobProxy(photo.thumbnailUrl)}
-                  alt={photo.caption ?? `Photo ${i + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-              </div>
-            ))}
-          </div>
+          <PhotoGrid
+            photos={event.photos.map((p) => ({
+              id: p.id,
+              thumbnailUrl: p.thumbnailUrl,
+              midSizeUrl: p.midSizeUrl,
+              caption: p.caption,
+            }))}
+          />
         )}
       </main>
     </div>
