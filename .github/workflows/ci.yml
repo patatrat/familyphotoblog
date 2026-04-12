@@ -10,9 +10,6 @@ jobs:
   ci:
     name: Lint, typecheck & test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: family-photos
 
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +18,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: family-photos/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Pin npm version
         run: npm install -g npm@11.6.2
