@@ -2,12 +2,33 @@ import { requireAdmin } from "@/lib/session"
 import { db } from "@/lib/db"
 import { Nav } from "@/components/nav"
 import { approveUserAction, revokeUserAction, deleteUserAction, setRoleAction } from "@/app/actions/admin"
+import { resolveRemovalAction } from "@/app/actions/photos"
 import { getSettings } from "@/lib/settings"
+import { blobProxy } from "@/lib/blob-url"
 import Link from "next/link"
 
 export default async function AdminPage() {
   const session = await requireAdmin()
   const settings = await getSettings()
+
+  const removalRequests = await db.removalRequest.findMany({
+    where: { status: "PENDING" },
+    orderBy: { createdAt: "asc" },
+    include: {
+      photo: { select: { thumbnailUrl: true, eventId: true } },
+    },
+  })
+
+  const requesterIds = [...new Set(removalRequests.map((r) => r.requestedBy))]
+  const requesters = await db.user.findMany({
+    where: { id: { in: requesterIds } },
+    select: { id: true, name: true },
+  })
+  const requesterMap = Object.fromEntries(requesters.map((u) => [u.id, u.name]))
+  const requestsWithNames = removalRequests.map((r) => ({
+    ...r,
+    requesterName: requesterMap[r.requestedBy] ?? "Unknown",
+  }))
 
   const users = await db.user.findMany({
     orderBy: { createdAt: "asc" },
@@ -70,6 +91,55 @@ export default async function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </section>
+        )}
+
+        {/* Photo removal queue */}
+        {requestsWithNames.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4">
+              Photo removal requests ({requestsWithNames.length})
+            </h2>
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-red-200 dark:border-red-900 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
+              {requestsWithNames.map((r) => (
+                <div key={r.id} className="flex items-center gap-4 px-4 py-3">
+                  {/* Thumbnail */}
+                  <Link href={`/events/${r.photo.eventId}`} className="shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={blobProxy(r.photo.thumbnailUrl)}
+                      alt="Reported photo"
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-zinc-900 dark:text-zinc-100">
+                      Reported by <span className="font-medium">{r.requesterName}</span>
+                    </p>
+                    {r.reason && (
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+                        "{r.reason}"
+                      </p>
+                    )}
+                    <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
+                      {new Date(r.createdAt).toLocaleDateString("en-NZ")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <form action={resolveRemovalAction.bind(null, r.id, "restore")}>
+                      <button type="submit" className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
+                        Restore
+                      </button>
+                    </form>
+                    <form action={resolveRemovalAction.bind(null, r.id, "delete")}>
+                      <button type="submit" className="text-xs text-red-500 hover:underline font-medium">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
