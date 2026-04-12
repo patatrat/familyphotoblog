@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Frame outer -->
+  <rect x="1" y="1" width="30" height="30" rx="4" ry="4" fill="#8B6343"/>
+  <!-- Frame inner bevel (lighter) -->
+  <rect x="2.5" y="2.5" width="27" height="27" rx="3" ry="3" fill="#A0784F"/>
+  <!-- Photo area -->
+  <rect x="4" y="4" width="24" height="24" rx="2" ry="2" fill="#87CEEB"/>
+  <!-- Sky gradient via simple shapes -->
+  <rect x="4" y="4" width="24" height="14" rx="2" ry="2" fill="#6BB8E8"/>
+  <!-- Sun -->
+  <circle cx="23" cy="9" r="3" fill="#FFD700" opacity="0.9"/>
+  <!-- Rolling hills - back -->
+  <ellipse cx="10" cy="26" rx="12" ry="7" fill="#4A8C3F"/>
+  <ellipse cx="26" cy="27" rx="10" ry="6" fill="#5BA04A"/>
+  <!-- Rolling hills - front -->
+  <ellipse cx="16" cy="29" rx="16" ry="6" fill="#3D7A34"/>
+  <!-- Clip photo area so hills don't overflow frame -->
+  <rect x="4" y="4" width="24" height="24" rx="2" ry="2" fill="none" stroke="#A0784F" stroke-width="0.5"/>
+  <!-- Corner screws / dots for frame detail -->
+  <circle cx="4.5" cy="4.5" r="1" fill="#6B4C2A"/>
+  <circle cx="27.5" cy="4.5" r="1" fill="#6B4C2A"/>
+  <circle cx="4.5" cy="27.5" r="1" fill="#6B4C2A"/>
+  <circle cx="27.5" cy="27.5" r="1" fill="#6B4C2A"/>
+</svg>
