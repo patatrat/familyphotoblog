@@ -127,7 +127,7 @@ Priority scale:
 | PH2 | ✓ Server-side processing on upload: EXIF strip, thumbnail (400px), mid-size (1200px) | P1 | Using sharp |
 | PH3 | ✓ Serve thumbnails on event page, mid-size in lightbox | P1 | Thumbnails done; lightbox is PH5 |
 | PH4 | ✓ Signed/protected blob URLs — photos inaccessible without valid session | P1 | Proxied via /api/blob with session check |
-| PH5 | Full-size photo viewer — lightbox overlay with ← → navigation and X to close | P2 | |
+| PH5 | ✓ Full-size photo viewer — lightbox overlay with ← → navigation and X to close | P2 | |
 | PH6 | Photo removal request — hides photo immediately; admin reviews in panel | P2 | |
 | PH7 | Admin resolves removal request (delete permanently or restore) | P2 | |
 | PH8 | Display who took the photo (uploader attribution) | P3 | Shown under each photo |
