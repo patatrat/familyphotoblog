@@ -3,7 +3,7 @@
 A private, invite-only photo blog for the Radomski family. Built around "events" (e.g. Christmas 2024) that contain photos, comments, and emoji reactions. Only authenticated, approved family members can see anything.
 
 **Production:** [photos.radomski.co.nz](https://photos.radomski.co.nz)  
-**Staging:** [staging.photos.radomski.co.nz](https://staging.photos.radomski.co.nz)
+**Staging:** [photos-staging.radomski.co.nz](https://photos-staging.radomski.co.nz)
 
 ---
 
@@ -112,7 +112,7 @@ Two Vercel projects mirror two branches:
 
 | Branch | Project | URL |
 |--------|---------|-----|
-| `staging` | family-photos-staging | staging.photos.radomski.co.nz |
+| `staging` | family-photos-staging | photos-staging.radomski.co.nz |
 | `main` | family-photos | photos.radomski.co.nz |
 
 **Workflow:** develop on `staging` branch → push → test on staging URL → merge to `main` → production deploys automatically.

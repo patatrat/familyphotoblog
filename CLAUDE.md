@@ -33,7 +33,7 @@ Browser → Cloudflare DNS/CDN → Vercel (Next.js App Router)
 - Original stored but never served directly to browsers
 - Rationale: instant page loads, controlled dimensions, cheaper than on-demand optimisation, EXIF strip in same pipeline
 
-**Staging:** Separate Vercel project at `staging.photos.radomski.co.nz` tied to the `staging` branch.
+**Staging:** Separate Vercel project at `photos-staging.radomski.co.nz` tied to the `staging` branch.
 - Rationale: stable URL required for magic link email flows and reliable Playwright E2E tests
 - Branch preview deployments generate random URLs which break email auth
 
@@ -227,7 +227,7 @@ Priority scale:
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
 | IN1 | ✓ GitHub branch protection on `main` — PRs required, no direct push | P1 | |
-| IN2 | ✓ `staging` branch → separate Vercel project at `staging.photos.radomski.co.nz` | P1 | |
+| IN2 | ✓ `staging` branch → separate Vercel project at `photos-staging.radomski.co.nz` | P1 | |
 | IN3 | ✓ CI: lint, type-check, unit tests on every PR via GitHub Actions | P1 | |
 | IN4 | ✓ Vitest + React Testing Library (unit/component tests) | P1 | |
 | IN5 | ✓ `.env.example` with all vars documented | P1 | |
