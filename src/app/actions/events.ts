@@ -92,7 +92,7 @@ export async function publishEventAction(eventId: string): Promise<void> {
   revalidatePath(`/events/${eventId}`)
   revalidatePath(`/events/${eventId}/edit`)
 
-  // Send new event notifications (fire-and-forget — don't block the response)
+  // Send new event notifications — must await, Vercel terminates functions on response
   const recipients = await db.user.findMany({
     where: {
       approved: true,
@@ -102,7 +102,7 @@ export async function publishEventAction(eventId: string): Promise<void> {
     select: { email: true, name: true },
   })
 
-  void sendNewEventEmails(event, recipients)
+  await sendNewEventEmails(event, recipients)
 }
 
 export async function deletePhotoAction(photoId: string, eventId: string): Promise<void> {
