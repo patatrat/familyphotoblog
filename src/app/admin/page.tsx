@@ -5,7 +5,6 @@ import {
   approveUserAction,
   revokeUserAction,
   deleteUserAction,
-  setRoleAction,
   approveEventAction,
   rejectEventAction,
   approvePhotoAction,
@@ -14,6 +13,7 @@ import {
 import { resolveRemovalAction } from "@/app/actions/photos"
 import { getSettings } from "@/lib/settings"
 import { blobProxy } from "@/lib/blob-url"
+import { RoleSelect } from "./role-select"
 import Link from "next/link"
 
 export default async function AdminPage() {
@@ -297,19 +297,7 @@ export default async function AdminPage() {
                       {user.id === session.user.id ? (
                         <span className="text-zinc-500 dark:text-zinc-400">{user.role}</span>
                       ) : (
-                        <form action={setRoleAction}>
-                          <input type="hidden" name="userId" value={user.id} />
-                          <select
-                            name="role"
-                            defaultValue={user.role}
-                            onChange={(e) => e.currentTarget.form?.requestSubmit()}
-                            className="text-sm bg-transparent text-zinc-700 dark:text-zinc-300 border-0 focus:outline-none cursor-pointer"
-                          >
-                            <option value="USER">USER</option>
-                            <option value="MODERATOR">MODERATOR</option>
-                            <option value="ADMIN">ADMIN</option>
-                          </select>
-                        </form>
+                        <RoleSelect userId={user.id} role={user.role} />
                       )}
                     </td>
                     <td className="px-4 py-3">
