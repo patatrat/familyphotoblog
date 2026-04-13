@@ -368,7 +368,7 @@ model EventTag {
 
 ## Current Status
 
-All P1 and P2 features complete. All originally planned P3 features now complete except E10, EM3/EM4, PH8, IN8, IN9/IN10. Site is live with a broader family invite underway.
+All P1 and P2 features complete. All originally planned P3 features now complete except E10, PH8, IN8, IN9/IN10. Site is live with a broader family invite underway.
 
 ### Infrastructure notes
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
