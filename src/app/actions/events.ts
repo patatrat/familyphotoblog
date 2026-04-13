@@ -6,6 +6,7 @@ import { db } from "@/lib/db"
 import { requireApproved, requireAdmin } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
 import { setEventTags } from "@/lib/tags"
+import { sendNewEventEmails } from "@/lib/email"
 
 export type EventFormState = { error?: string } | undefined
 
@@ -80,9 +81,9 @@ export async function updateEventAction(
 }
 
 export async function publishEventAction(eventId: string): Promise<void> {
-  await requireAdmin()
+  const session = await requireAdmin()
 
-  await db.event.update({
+  const event = await db.event.update({
     where: { id: eventId },
     data: { status: "PUBLISHED" },
   })
@@ -90,6 +91,18 @@ export async function publishEventAction(eventId: string): Promise<void> {
   revalidatePath("/")
   revalidatePath(`/events/${eventId}`)
   revalidatePath(`/events/${eventId}/edit`)
+
+  // Send new event notifications (fire-and-forget — don't block the response)
+  const recipients = await db.user.findMany({
+    where: {
+      approved: true,
+      emailNewEvents: true,
+      NOT: { id: session.user.id },
+    },
+    select: { email: true, name: true },
+  })
+
+  void sendNewEventEmails(event, recipients)
 }
 
 export async function deletePhotoAction(photoId: string, eventId: string): Promise<void> {

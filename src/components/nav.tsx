@@ -35,6 +35,12 @@ export async function Nav({ session }: { session: AuthSession }) {
               Admin
             </Link>
           )}
+          <Link
+            href="/account"
+            className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+          >
+            Account
+          </Link>
           <ThemeToggle />
           <form action={logoutAction}>
             <button

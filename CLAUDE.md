@@ -183,8 +183,8 @@ Priority scale:
 |---|---------|----------|-------|
 | EM1 | ✓ Magic link email — signup | P1 | |
 | EM2 | ✓ Magic link email — login | P1 | |
-| EM3 | Email sent when new event is published | P3 | |
-| EM4 | User setting: opt out of new event emails (opt-in default) | P3 | |
+| EM3 | ✓ Email sent when new event is published | P3 | |
+| EM4 | ✓ User setting: opt out of new event emails (opt-in default) | P3 | |
 | EM5 | Email when mentioned in a comment | P4 | |
 | EM6 | User setting: opt out of mention emails | P4 | |
 
@@ -379,13 +379,13 @@ All P1 and P2 features complete. All originally planned P3 features now complete
 - IN8 — Playwright E2E tests against staging
 
 ### Remaining P3 (suggested order)
-1. EM3/EM4 — Email notification on new event publish
-2. PH8 — Uploader attribution shown in lightbox
-3. E10 — Archive / all events page
-4. IN9/IN10 — Scheduled DB and Blob backups
+1. PH8 — Uploader attribution shown in lightbox
+2. E10 — Archive / all events page
+3. IN9/IN10 — Scheduled DB and Blob backups
 
 ### Recently completed P3
 - UI1 ✓ — Dark mode toggle (class-based, localStorage persistence)
 - UI3 ✓ — Loading skeletons for home and event pages + image fade-in
 - E11/E12 + AD5 ✓ — User-submitted events with approval queue
 - PH9/PH10 + AD6 ✓ — User-submitted photos with approval queue
+- EM3/EM4 ✓ — New event publish emails + per-user opt-out in /account
