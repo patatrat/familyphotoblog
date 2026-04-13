@@ -3,6 +3,8 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 const publicPaths = ["/login", "/signup", "/verify", "/pending"]
+// Paths where authenticated users should be redirected to / (not /pending — unapproved users need to stay there)
+const authRedirectPaths = ["/login", "/signup", "/verify"]
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
@@ -40,7 +42,8 @@ export const proxy = auth(function proxy(req: NextRequest & { auth: unknown }) {
     return applySecurityHeaders(NextResponse.redirect(new URL("/login", req.url)))
   }
 
-  if (isAuthenticated && isPublic) {
+  const isAuthRedirect = authRedirectPaths.some((p) => path.startsWith(p))
+  if (isAuthenticated && isAuthRedirect) {
     return applySecurityHeaders(NextResponse.redirect(new URL("/", req.url)))
   }
 
