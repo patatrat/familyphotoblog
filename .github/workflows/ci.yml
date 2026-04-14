@@ -65,10 +65,15 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
+      - name: Seed E2E test data
+        run: npx tsx playwright/global-setup.ts
+        env:
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          PLAYWRIGHT_BASE_URL: https://photos-staging.radomski.co.nz
+
       - name: Run E2E tests
         run: npm run test:e2e
         env:
-          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           PLAYWRIGHT_BASE_URL: https://photos-staging.radomski.co.nz
 
       - name: Upload test report
