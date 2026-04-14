@@ -109,7 +109,7 @@ Priority scale:
 | E7 | ✓ Tag events on creation | P2 | |
 | E8 | ✓ Browse / filter events by tag | P2 | |
 | E9 | ✓ Select featured image for event card | P2 | |
-| E10 | Archive / all events list page | P3 | |
+| E10 | ✓ Archive / all events list page | P3 | |
 | E11 | ✓ Users create new events (pending approval) | P3 | |
 | E12 | ✓ New user-submitted events require admin approval before visible | P3 | |
 | E13 | Bulk photo upload to event | P3 | |
@@ -131,7 +131,7 @@ Priority scale:
 | PH5 | ✓ Full-size photo viewer — lightbox overlay with ← → navigation and X to close | P2 | |
 | PH6 | ✓ Photo removal request — hides photo immediately; admin reviews in panel | P2 | |
 | PH7 | ✓ Admin resolves removal request (delete permanently or restore) | P2 | |
-| PH8 | Display who took the photo (uploader attribution) | P3 | Shown under each photo |
+| PH8 | ✓ Display who took the photo (uploader attribution) | P3 | Shown in lightbox |
 | PH9 | ✓ Users upload photos to existing events (pending approval) | P3 | |
 | PH10 | ✓ New user-submitted photos require approval before visible | P3 | |
 | PH11 | Download original photo (full-res, requires auth) | P3 | |
@@ -368,7 +368,7 @@ model EventTag {
 
 ## Current Status
 
-All P1 and P2 features complete. All originally planned P3 features now complete except E10, PH8, IN8, IN9/IN10. Site is live with a broader family invite underway.
+All P1 and P2 features complete. All originally planned P3 features now complete except IN8, IN9/IN10. Site is live with a broader family invite underway.
 
 ### Infrastructure notes
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
@@ -379,11 +379,11 @@ All P1 and P2 features complete. All originally planned P3 features now complete
 - IN8 — Playwright E2E tests against staging
 
 ### Remaining P3 (suggested order)
-1. PH8 — Uploader attribution shown in lightbox
-2. E10 — Archive / all events page
-3. IN9/IN10 — Scheduled DB and Blob backups
+1. IN9/IN10 — Scheduled DB and Blob backups
 
 ### Recently completed P3
+- PH8 ✓ — Uploader attribution shown in lightbox
+- E10 ✓ — Archive / all events page (grouped by year, linked from nav)
 - UI1 ✓ — Dark mode toggle (class-based, localStorage persistence)
 - UI3 ✓ — Loading skeletons for home and event pages + image fade-in
 - E11/E12 + AD5 ✓ — User-submitted events with approval queue
