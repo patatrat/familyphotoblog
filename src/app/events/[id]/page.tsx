@@ -26,6 +26,7 @@ export default async function EventPage({
         where: { status: "VISIBLE" },
         orderBy: { sortOrder: "asc" },
         include: {
+          uploader: { select: { name: true } },
           comments: {
             orderBy: { createdAt: "asc" },
             include: { user: { select: { id: true, name: true } } },
@@ -45,6 +46,7 @@ export default async function EventPage({
     thumbnailUrl: p.thumbnailUrl,
     midSizeUrl: p.midSizeUrl,
     caption: p.caption,
+    uploaderName: p.uploader.name,
     comments: p.comments.map((c) => ({
       id: c.id,
       content: c.content,

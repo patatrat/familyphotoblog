@@ -19,6 +19,12 @@ export async function Nav({ session }: { session: AuthSession }) {
           Radomski Photos
         </Link>
         <div className="flex items-center gap-4">
+          <Link
+            href="/events"
+            className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+          >
+            Archive
+          </Link>
           {canCreateEvent && (
             <Link
               href="/events/new"

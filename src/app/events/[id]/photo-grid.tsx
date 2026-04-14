@@ -28,6 +28,7 @@ type Photo = {
   thumbnailUrl: string
   midSizeUrl: string
   caption: string | null
+  uploaderName: string
   comments: Comment[]
   reactions: ReactionGroup[]
 }
@@ -249,6 +250,7 @@ function Lightbox({
           {photo.caption && (
             <p className="text-white/70 text-sm text-center">{photo.caption}</p>
           )}
+          <p className="text-white/40 text-xs text-center">Photo by {photo.uploaderName}</p>
         </div>
 
         {total > 1 && (
