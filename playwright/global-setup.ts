@@ -6,7 +6,7 @@ import { writeFileSync, mkdirSync } from "fs"
 import { randomUUID } from "crypto"
 import path from "path"
 
-export default async function globalSetup() {
+async function globalSetup() {
   const databaseUrl = process.env.E2E_DATABASE_URL
   if (!databaseUrl) {
     throw new Error("E2E_DATABASE_URL is required for E2E tests")
@@ -77,3 +77,8 @@ export default async function globalSetup() {
     await db.$disconnect()
   }
 }
+
+globalSetup().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
