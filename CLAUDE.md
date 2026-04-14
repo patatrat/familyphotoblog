@@ -238,7 +238,7 @@ Priority scale:
 | IN5 | ✓ `.env.example` with all vars documented | P1 | |
 | IN6 | ✓ Prisma migrations tracked in version control | P1 | |
 | IN7 | ✓ Seed script: admin user + sample events for local dev | P1 | |
-| IN8 | Playwright E2E tests for critical flows, run against staging | P2 | |
+| IN8 | ✓ Playwright E2E tests for critical flows, run against staging | P2 | |
 | IN12 | ✓ Move Next.js app from family-photos/ subfolder to repo root | P1 | Update Vercel root directory (prod + staging) and GitHub Actions workflow path |
 | IN13 | ✓ `prisma migrate deploy` runs automatically on every Vercel build | P1 | Added to npm build script |
 | IN9 | Scheduled DB backup to AWS S3 (Glacier or Standard-IA) | P3 | |
@@ -368,20 +368,18 @@ model EventTag {
 
 ## Current Status
 
-All P1 and P2 features complete. All originally planned P3 features now complete except IN8, IN9/IN10. Site is live with a broader family invite underway.
+All P1 and P2 features complete. Only remaining work is IN9/IN10 (backups). Site is live with a broader family invite underway.
 
 ### Infrastructure notes
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
 - `family-photos/` subfolder fully removed; repo root is the Next.js app
 - Dark mode: class-based via ThemeProvider + localStorage, anti-flash inline script, defaults to system preference
 
-### Remaining P2
-- IN8 — Playwright E2E tests against staging
-
-### Remaining P3 (suggested order)
+### Remaining P3
 1. IN9/IN10 — Scheduled DB and Blob backups
 
-### Recently completed P3
+### Recently completed
+- IN8 ✓ — Playwright E2E tests (19 tests: auth, events, lightbox, admin) running in CI on staging pushes
 - PH8 ✓ — Uploader attribution shown in lightbox
 - E10 ✓ — Archive / all events page (grouped by year, linked from nav)
 - UI1 ✓ — Dark mode toggle (class-based, localStorage persistence)
