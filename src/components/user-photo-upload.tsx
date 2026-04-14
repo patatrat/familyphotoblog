@@ -3,39 +3,55 @@
 import { useCallback, useRef, useState } from "react"
 
 export function UserPhotoUpload({ eventId }: { eventId: string }) {
-  const [uploading, setUploading] = useState(false)
-  const [submitted, setSubmitted] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  type UploadItem = { name: string; status: "uploading" | "done" | "error"; error?: string }
+  const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([])
+  const [totalSubmitted, setTotalSubmitted] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleUpload = useCallback(
     async (files: FileList) => {
-      setUploading(true)
-      setError(null)
-      let count = 0
+      const fileArray = Array.from(files)
+      setUploadQueue(fileArray.map((f) => ({ name: f.name, status: "uploading" as const })))
 
-      for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append("file", file)
-        try {
-          const res = await fetch(`/api/events/${eventId}/upload`, {
-            method: "POST",
-            body: formData,
-          })
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}))
-            setError(body.error ?? "Upload failed")
-            break
+      let successCount = 0
+      await Promise.allSettled(
+        fileArray.map(async (file, i) => {
+          const formData = new FormData()
+          formData.append("file", file)
+          try {
+            const res = await fetch(`/api/events/${eventId}/upload`, {
+              method: "POST",
+              body: formData,
+            })
+            if (!res.ok) {
+              const body = await res.json().catch(() => ({}))
+              setUploadQueue((prev) =>
+                prev.map((item, j) =>
+                  j === i ? { ...item, status: "error", error: body.error ?? "Upload failed" } : item
+                )
+              )
+              return
+            }
+            successCount++
+            setUploadQueue((prev) =>
+              prev.map((item, j) => (j === i ? { ...item, status: "done" } : item))
+            )
+          } catch {
+            setUploadQueue((prev) =>
+              prev.map((item, j) =>
+                j === i ? { ...item, status: "error", error: "Connection error" } : item
+              )
+            )
           }
-          count++
-        } catch {
-          setError("Upload failed — check your connection")
-          break
-        }
-      }
+        })
+      )
 
-      setUploading(false)
-      if (count > 0) setSubmitted((prev) => prev + count)
+      if (successCount > 0) setTotalSubmitted((prev) => prev + successCount)
+
+      // Clear queue after a short delay if no failures
+      setTimeout(() => {
+        setUploadQueue((prev) => (prev.some((i) => i.status === "error") ? prev : []))
+      }, 2000)
     },
     [eventId]
   )
@@ -47,6 +63,11 @@ export function UserPhotoUpload({ eventId }: { eventId: string }) {
     },
     [handleUpload]
   )
+
+  const uploading = uploadQueue.some((i) => i.status === "uploading")
+  const done = uploadQueue.filter((i) => i.status === "done").length
+  const failed = uploadQueue.filter((i) => i.status === "error")
+  const total = uploadQueue.length
 
   return (
     <section className="mt-10">
@@ -73,27 +94,38 @@ export function UserPhotoUpload({ eventId }: { eventId: string }) {
             }
           }}
         />
-        {uploading ? (
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm">Uploading…</p>
-        ) : (
-          <>
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-              Drop photos here or click to browse
-            </p>
-            <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">
-              EXIF data (including GPS) stripped automatically
-            </p>
-          </>
-        )}
+        <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+          Drop photos here or click to browse
+        </p>
+        <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">
+          Select multiple files — EXIF data (including GPS) stripped automatically
+        </p>
       </div>
 
-      {error && (
-        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+      {uploadQueue.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-500 dark:text-zinc-400">
+              {uploading ? `Uploading ${done} / ${total}…` : `${done} of ${total} uploaded`}
+            </span>
+          </div>
+          <div className="h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-300"
+              style={{ width: `${total > 0 ? (done / total) * 100 : 0}%` }}
+            />
+          </div>
+          {failed.map((item, i) => (
+            <p key={i} className="text-xs text-red-600 dark:text-red-400">
+              {item.name}: {item.error}
+            </p>
+          ))}
+        </div>
       )}
 
-      {submitted > 0 && (
+      {totalSubmitted > 0 && uploadQueue.length === 0 && (
         <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">
-          {submitted} photo{submitted !== 1 ? "s" : ""} submitted for review. An admin will approve them shortly.
+          {totalSubmitted} photo{totalSubmitted !== 1 ? "s" : ""} submitted for review. An admin will approve them shortly.
         </p>
       )}
     </section>
