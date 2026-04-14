@@ -374,6 +374,7 @@ All P1 and P2 features complete. Only remaining work is IN9/IN10 (backups). Site
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
 - `family-photos/` subfolder fully removed; repo root is the Next.js app
 - Dark mode: class-based via ThemeProvider + localStorage, anti-flash inline script, defaults to system preference
+- E2E tests run against staging (`https://photos-staging.radomski.co.nz`) and are opt-in: include `[e2e]` in the commit message to trigger them. Requires `E2E_DATABASE_URL` GitHub Actions secret (staging Neon direct URL).
 
 ### Remaining P3
 1. IN9/IN10 — Scheduled DB and Blob backups
