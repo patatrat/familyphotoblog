@@ -91,7 +91,7 @@ Priority scale:
 | A10 | ✓ Approve new user | P2 | Admin panel action |
 | A11 | Moderator role — can approve photos, events, handle removal requests | P3 | |
 | A12 | Assign moderator role | P3 | Admin only |
-| A13 | Invite user via email | P4 | Admin sends invite link directly |
+| A13 | Invite user via email, including a welcome email text that can be edited before send, and bulk invites | P4 | Admin sends invite link directly |
 | A14 | Remove user's ability to comment | P4 | Soft mute |
 
 ---
@@ -117,6 +117,7 @@ Priority scale:
 | E15 | Users suggest or add tags to others' events | P4 | |
 | E16 | Restrict event visibility to specific users or groups | P4 | |
 | E17 | Edit event details (title, date, description) by creator after submission | P4 | Currently PENDING events are read-only for creators |
+| E18 | Unpublish / Delete events |P2 | |
 
 ---
 
@@ -139,7 +140,7 @@ Priority scale:
 | PH13 | Duplicate photo detection | P4 | Hash comparison on upload |
 | PH14 | Simple photo manipulation — rotate, crop, flip | P4 | |
 | PH15 | Toggle: allow users to upload photos (on/off) | P4 | Admin setting |
-| PH16 | Extract location from EXIF before stripping (optional, user opt-in) | P4 | |
+| PH16 | Extract location from EXIF before stripping (optional, user opt-in) | P5 | |
 | PH17 | Tag photos | P4 | |
 
 ---
@@ -159,6 +160,8 @@ Priority scale:
 | CR9 | Profanity filter on comments | P4 | |
 | CR10 | Email notification to uploader when their submitted photo is approved or rejected | P4 | |
 | CR11 | Email notification to submitter when their event is approved or rejected | P4 | |
+| CR12 | In app notifications, displaying reactions, tags, comment mentions | P4 | |
+| CR13 | Report comment | P4 | |
 
 ---
 
@@ -224,6 +227,8 @@ Priority scale:
 | UI4 | "Back to top" button on long event pages | P4 | |
 | UI5 | Thumbnail blur-up placeholder (base64 LQIP) | P4 | Further reduce perceived load time for photo grid |
 | UI6 | Pull-to-refresh on mobile | P4 | |
+| UI7 | UI / UX review with a specalised agent skill | P3 | | 
+| UI8 | Mobile web app: IOS and Andriod | P4 | |
 
 ---
 
@@ -244,6 +249,7 @@ Priority scale:
 | IN9 | Scheduled DB backup to AWS S3 (Glacier or Standard-IA) | P3 | |
 | IN10 | Scheduled Vercel Blob export/backup | P3 | |
 | IN11 | Open-source portability — storage, email, auth configurable via env vars | P4 | |
+| IN12 | Restore from backup | P3 | |
 
 ---
 
