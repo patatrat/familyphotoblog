@@ -1,43 +1,15 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
+import { usePhotoUpload } from "@/hooks/use-photo-upload"
 
 export function UserPhotoUpload({ eventId }: { eventId: string }) {
-  const [uploading, setUploading] = useState(false)
   const [submitted, setSubmitted] = useState(0)
-  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleUpload = useCallback(
-    async (files: FileList) => {
-      setUploading(true)
-      setError(null)
-      let count = 0
-
-      for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append("file", file)
-        try {
-          const res = await fetch(`/api/events/${eventId}/upload`, {
-            method: "POST",
-            body: formData,
-          })
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}))
-            setError(body.error ?? "Upload failed")
-            break
-          }
-          count++
-        } catch {
-          setError("Upload failed — check your connection")
-          break
-        }
-      }
-
-      setUploading(false)
-      if (count > 0) setSubmitted((prev) => prev + count)
-    },
-    [eventId]
+  const { handleUpload, isUploading, progress, errors } = usePhotoUpload(
+    eventId,
+    () => setSubmitted((prev) => prev + 1)
   )
 
   const handleDrop = useCallback(
@@ -73,8 +45,12 @@ export function UserPhotoUpload({ eventId }: { eventId: string }) {
             }
           }}
         />
-        {uploading ? (
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm">Uploading…</p>
+        {isUploading ? (
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm">
+            {progress
+              ? `Uploading ${progress.done} of ${progress.total}…`
+              : "Uploading…"}
+          </p>
         ) : (
           <>
             <p className="text-zinc-500 dark:text-zinc-400 text-sm">
@@ -87,8 +63,11 @@ export function UserPhotoUpload({ eventId }: { eventId: string }) {
         )}
       </div>
 
-      {error && (
-        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+      {errors.length > 0 && (
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+          {errors.length} failed:{" "}
+          {errors.map((e) => e.split(":")[0]).join(", ")}
+        </p>
       )}
 
       {submitted > 0 && (
