@@ -8,6 +8,7 @@ import {
   setFeaturedPhotoAction,
 } from "@/app/actions/events"
 import { blobProxy } from "@/lib/blob-url"
+import { usePhotoUpload } from "@/hooks/use-photo-upload"
 import Link from "next/link"
 
 type Photo = { id: string; thumbnailUrl: string; caption: string | null }
@@ -27,10 +28,17 @@ export function EventEditForm({ event }: { event: EventData }) {
   const [state, action, pending] = useActionState(updateEventAction, undefined)
   const [photos, setPhotos] = useState<Photo[]>(event.photos)
   const [featuredPhotoId, setFeaturedPhotoId] = useState<string | null>(event.featuredPhotoId)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const submitted = useRef(false)
+
+  const { handleUpload, isUploading, progress, errors: uploadErrors } = usePhotoUpload(
+    event.id,
+    (photo) =>
+      setPhotos((prev) => [
+        ...prev,
+        { id: photo.photoId, thumbnailUrl: photo.thumbnailUrl, caption: null },
+      ])
+  )
 
   useEffect(() => {
     if (submitted.current && !pending && !state?.error) {
@@ -39,44 +47,6 @@ export function EventEditForm({ event }: { event: EventData }) {
     }
   }, [pending, state])
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleUpload = useCallback(
-    async (files: FileList) => {
-      setUploading(true)
-      setUploadError(null)
-
-      for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append("file", file)
-
-        try {
-          const res = await fetch(`/api/events/${event.id}/upload`, {
-            method: "POST",
-            body: formData,
-          })
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}))
-            setUploadError(body.error ?? "Upload failed")
-            break
-          }
-          const data = (await res.json()) as {
-            photoId: string
-            thumbnailUrl: string
-          }
-          setPhotos((prev) => [
-            ...prev,
-            { id: data.photoId, thumbnailUrl: data.thumbnailUrl, caption: null },
-          ])
-        } catch {
-          setUploadError("Upload failed — check your connection")
-          break
-        }
-      }
-
-      setUploading(false)
-    },
-    [event.id]
-  )
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -286,8 +256,12 @@ export function EventEditForm({ event }: { event: EventData }) {
               className="hidden"
               onChange={handleFileChange}
             />
-            {uploading ? (
-              <p className="text-zinc-500 dark:text-zinc-400">Uploading…</p>
+            {isUploading ? (
+              <p className="text-zinc-500 dark:text-zinc-400">
+                {progress
+                  ? `Uploading ${progress.done} of ${progress.total}…`
+                  : "Uploading…"}
+              </p>
             ) : (
               <>
                 <p className="text-zinc-500 dark:text-zinc-400 text-sm">
@@ -300,8 +274,11 @@ export function EventEditForm({ event }: { event: EventData }) {
             )}
           </div>
 
-          {uploadError && (
-            <p className="text-sm text-red-600 dark:text-red-400 mb-4">{uploadError}</p>
+          {uploadErrors.length > 0 && (
+            <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+              {uploadErrors.length} failed:{" "}
+              {uploadErrors.map((e) => e.split(":")[0]).join(", ")}
+            </p>
           )}
 
           {photos.length > 0 && (
