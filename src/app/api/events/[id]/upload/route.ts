@@ -54,7 +54,7 @@ export async function POST(
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    // Extract EXIF date before sharp strips it
+    // Extract EXIF date before any conversion strips it
     let takenAt: Date | null = null
     try {
       const exif = await exifr.parse(buffer, ["DateTimeOriginal", "CreateDate"])
@@ -66,13 +66,23 @@ export async function POST(
       // Non-critical — some images have no EXIF
     }
 
+    // Vercel's sharp binary includes libheif but without the HEVC codec that Apple HEIC requires.
+    // Convert HEIC/HEIF to JPEG first using heic-convert (WASM libheif with HEVC support).
+    let processBuffer = buffer
+    if (ext === "heic" || ext === "heif" || file.type === "image/heic" || file.type === "image/heif") {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const heicConvert = require("heic-convert") as (opts: { buffer: Buffer; format: string; quality: number }) => Promise<ArrayBuffer>
+      const converted = await heicConvert({ buffer, format: "JPEG", quality: 0.95 })
+      processBuffer = Buffer.from(converted)
+    }
+
     const baseName = `${eventId}/${Date.now()}-${Math.random().toString(36).slice(2)}`
 
     // Sharp strips EXIF by default; .rotate() applies EXIF orientation before stripping
     // Original is not stored — this is a sharing site, not a backup service
     const [thumbBuf, midBuf] = await Promise.all([
-      sharp(buffer).rotate().resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
-      sharp(buffer).rotate().resize({ width: 1200, withoutEnlargement: true }).jpeg({ quality: 88 }).toBuffer(),
+      sharp(processBuffer).rotate().resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
+      sharp(processBuffer).rotate().resize({ width: 1200, withoutEnlargement: true }).jpeg({ quality: 88 }).toBuffer(),
     ])
 
     const [thumb, mid] = await Promise.all([
