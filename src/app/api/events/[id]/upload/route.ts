@@ -45,7 +45,10 @@ export async function POST(
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    if (!file.type.startsWith("image/")) {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
+    const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "avif", "tiff", "tif", "heic", "heif"])
+    const isImage = file.type.startsWith("image/") || IMAGE_EXTS.has(ext)
+    if (!isImage) {
       return NextResponse.json({ error: "File must be an image" }, { status: 400 })
     }
 

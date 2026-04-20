@@ -251,7 +251,7 @@ export function EventEditForm({ event }: { event: EventData }) {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               multiple
               className="hidden"
               onChange={handleFileChange}

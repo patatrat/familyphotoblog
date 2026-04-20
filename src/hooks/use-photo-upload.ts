@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react"
 
 const CONCURRENCY = 3
+const VIDEO_EXTS = new Set(["mov", "mp4", "avi", "mkv", "webm", "m4v", "m4p", "3gp"])
 
 type UploadResult = { photoId: string; thumbnailUrl: string; pending: boolean }
 
@@ -29,6 +30,12 @@ export function usePhotoUpload(
       async function worker() {
         while (index < fileArray.length) {
           const file = fileArray[index++]
+          const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
+          if (file.type.startsWith("video/") || VIDEO_EXTS.has(ext)) {
+            collected.push(`${file.name}: video files are not supported`)
+            setProgress((prev) => prev && { done: prev.done + 1, total: prev.total })
+            continue
+          }
           try {
             const formData = new FormData()
             formData.append("file", file)
