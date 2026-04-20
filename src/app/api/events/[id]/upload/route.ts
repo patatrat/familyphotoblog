@@ -70,10 +70,16 @@ export async function POST(
     // Convert HEIC/HEIF to JPEG first using heic-convert (WASM libheif with HEVC support).
     let processBuffer = buffer
     if (ext === "heic" || ext === "heif" || file.type === "image/heic" || file.type === "image/heif") {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const heicConvert = require("heic-convert") as (opts: { buffer: Buffer; format: string; quality: number }) => Promise<ArrayBuffer>
-      const converted = await heicConvert({ buffer, format: "JPEG", quality: 0.95 })
-      processBuffer = Buffer.from(converted)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const heicConvert = require("heic-convert") as (opts: { buffer: Buffer; format: string; quality: number }) => Promise<ArrayBuffer>
+        const converted = await heicConvert({ buffer, format: "JPEG", quality: 0.95 })
+        processBuffer = Buffer.from(converted)
+      } catch (heicErr) {
+        const heicMsg = heicErr instanceof Error ? heicErr.message : String(heicErr)
+        console.error(`[upload] HEIC conversion failed for "${file.name}" (${file.size} bytes): ${heicMsg}`)
+        return NextResponse.json({ error: `Could not convert HEIC file: ${heicMsg}` }, { status: 422 })
+      }
     }
 
     const baseName = `${eventId}/${Date.now()}-${Math.random().toString(36).slice(2)}`
