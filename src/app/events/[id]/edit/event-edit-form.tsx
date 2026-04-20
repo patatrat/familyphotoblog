@@ -31,7 +31,7 @@ export function EventEditForm({ event }: { event: EventData }) {
   const [saved, setSaved] = useState(false)
   const submitted = useRef(false)
 
-  const { handleUpload, isUploading, progress, errors: uploadErrors } = usePhotoUpload(
+  const { handleUpload, cancel, isUploading, progress, errors: uploadErrors, skipped } = usePhotoUpload(
     event.id,
     (photo) =>
       setPhotos((prev) => [
@@ -245,8 +245,8 @@ export function EventEditForm({ event }: { event: EventData }) {
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-10 text-center cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors mb-6"
+            onClick={!isUploading ? () => fileInputRef.current?.click() : undefined}
+            className={`border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-10 text-center transition-colors mb-3 ${isUploading ? "cursor-default" : "cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500"}`}
           >
             <input
               ref={fileInputRef}
@@ -273,6 +273,24 @@ export function EventEditForm({ event }: { event: EventData }) {
               </>
             )}
           </div>
+
+          {isUploading && (
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={cancel}
+                className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 underline"
+              >
+                Cancel upload
+              </button>
+            </div>
+          )}
+
+          {skipped > 0 && (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+              {skipped} already uploaded, skipped.
+            </p>
+          )}
 
           {uploadErrors.length > 0 && (
             <p className="text-sm text-red-600 dark:text-red-400 mb-4">
