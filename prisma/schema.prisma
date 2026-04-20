@@ -119,11 +119,13 @@ model Photo {
   takenAt        DateTime?
   sortOrder      Int             @default(0)
   status         PhotoStatus     @default(VISIBLE)
+  hash           String?
   comments       Comment[]
   reactions      Reaction[]
   removalRequest RemovalRequest?
   createdAt      DateTime        @default(now())
 
+  @@unique([eventId, hash])
   @@index([eventId, status])
 }
 

@@ -7,7 +7,7 @@ export function UserPhotoUpload({ eventId }: { eventId: string }) {
   const [submitted, setSubmitted] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { handleUpload, isUploading, progress, errors } = usePhotoUpload(
+  const { handleUpload, cancel, isUploading, progress, errors, skipped } = usePhotoUpload(
     eventId,
     () => setSubmitted((prev) => prev + 1)
   )
@@ -29,8 +29,8 @@ export function UserPhotoUpload({ eventId }: { eventId: string }) {
       <div
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
-        onClick={() => fileInputRef.current?.click()}
-        className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-8 text-center cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors"
+        onClick={!isUploading ? () => fileInputRef.current?.click() : undefined}
+        className={`border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-8 text-center transition-colors ${isUploading ? "cursor-default" : "cursor-pointer hover:border-zinc-400 dark:hover:border-zinc-500"}`}
       >
         <input
           ref={fileInputRef}
@@ -62,6 +62,22 @@ export function UserPhotoUpload({ eventId }: { eventId: string }) {
           </>
         )}
       </div>
+
+      {isUploading && (
+        <button
+          type="button"
+          onClick={cancel}
+          className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 underline"
+        >
+          Cancel upload
+        </button>
+      )}
+
+      {skipped > 0 && (
+        <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+          {skipped} already uploaded, skipped.
+        </p>
+      )}
 
       {errors.length > 0 && (
         <p className="mt-3 text-sm text-red-600 dark:text-red-400">

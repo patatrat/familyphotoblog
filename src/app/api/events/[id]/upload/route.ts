@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createHash } from "crypto"
 import { put } from "@vercel/blob"
 import sharp from "sharp"
 import exifr from "exifr"
@@ -54,6 +55,13 @@ export async function POST(
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
+    // Compute hash from original bytes before any conversion
+    const hash = createHash("sha256").update(buffer).digest("hex")
+    const existing = await db.photo.findFirst({ where: { eventId, hash } })
+    if (existing) {
+      return NextResponse.json({ duplicate: true })
+    }
+
     // Extract EXIF date before any conversion strips it
     let takenAt: Date | null = null
     try {
@@ -107,6 +115,7 @@ export async function POST(
         midSizeUrl: mid.url,
         takenAt,
         sortOrder,
+        hash,
         status: isAdmin ? "VISIBLE" : "PENDING",
       },
     })
