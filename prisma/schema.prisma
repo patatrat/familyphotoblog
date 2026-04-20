@@ -112,7 +112,7 @@ model Photo {
   event          Event           @relation(fields: [eventId], references: [id])
   uploadedBy     String
   uploader       User            @relation(fields: [uploadedBy], references: [id])
-  blobUrl        String
+  blobUrl        String?
   thumbnailUrl   String
   midSizeUrl     String
   caption        String?
@@ -123,6 +123,8 @@ model Photo {
   reactions      Reaction[]
   removalRequest RemovalRequest?
   createdAt      DateTime        @default(now())
+
+  @@index([eventId, status])
 }
 
 model RemovalRequest {

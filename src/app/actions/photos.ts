@@ -50,11 +50,18 @@ export async function resolveRemovalAction(
 
   if (resolution === "delete") {
     // Delete blobs, then the photo row (cascades removal request)
-    await del([
+    const blobsToDelete = [
       request.photo.blobUrl,
       request.photo.thumbnailUrl,
       request.photo.midSizeUrl,
-    ])
+    ].filter((url): url is string => url !== null)
+    if (blobsToDelete.length > 0) {
+      try {
+        await del(blobsToDelete)
+      } catch (err) {
+        console.error("[resolveRemoval] blob deletion failed:", err)
+      }
+    }
     await db.photo.delete({ where: { id: request.photoId } })
   } else {
     await db.photo.update({

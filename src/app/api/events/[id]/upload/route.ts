@@ -69,14 +69,13 @@ export async function POST(
     const baseName = `${eventId}/${Date.now()}-${Math.random().toString(36).slice(2)}`
 
     // Sharp strips EXIF by default; .rotate() applies EXIF orientation before stripping
-    const [originalBuf, thumbBuf, midBuf] = await Promise.all([
-      sharp(buffer).rotate().jpeg({ quality: 90 }).toBuffer(),
+    // Original is not stored — this is a sharing site, not a backup service
+    const [thumbBuf, midBuf] = await Promise.all([
       sharp(buffer).rotate().resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
       sharp(buffer).rotate().resize({ width: 1200, withoutEnlargement: true }).jpeg({ quality: 88 }).toBuffer(),
     ])
 
-    const [original, thumb, mid] = await Promise.all([
-      put(`photos/${baseName}-orig.jpg`, originalBuf, { access: "private", contentType: "image/jpeg" }),
+    const [thumb, mid] = await Promise.all([
       put(`photos/${baseName}-thumb.jpg`, thumbBuf, { access: "private", contentType: "image/jpeg" }),
       put(`photos/${baseName}-mid.jpg`, midBuf, { access: "private", contentType: "image/jpeg" }),
     ])
@@ -88,7 +87,6 @@ export async function POST(
       data: {
         eventId,
         uploadedBy: user.id,
-        blobUrl: original.url,
         thumbnailUrl: thumb.url,
         midSizeUrl: mid.url,
         takenAt,

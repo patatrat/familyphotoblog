@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { del } from "@vercel/blob"
 import { db } from "@/lib/db"
 import { requireApproved, requireAdmin } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
@@ -92,23 +93,38 @@ export async function publishEventAction(eventId: string): Promise<void> {
   revalidatePath(`/events/${eventId}`)
   revalidatePath(`/events/${eventId}/edit`)
 
-  // Send new event notifications — must await, Vercel terminates functions on response
-  const recipients = await db.user.findMany({
-    where: {
-      approved: true,
-      emailNewEvents: true,
-      NOT: { id: session.user.id },
-    },
-    select: { email: true, name: true },
-  })
-
-  await sendNewEventEmails(event, recipients)
+  // Fire-and-forget — email is non-critical and can be slow; don't block the response
+  void db.user
+    .findMany({
+      where: { approved: true, emailNewEvents: true, NOT: { id: session.user.id } },
+      select: { email: true, name: true },
+    })
+    .then((recipients) => sendNewEventEmails(event, recipients))
+    .catch((err) => console.error("[publishEvent] email notification failed:", err))
 }
 
 export async function deletePhotoAction(photoId: string, eventId: string): Promise<void> {
   await requireAdmin()
 
+  const photo = await db.photo.findUnique({
+    where: { id: photoId },
+    select: { blobUrl: true, thumbnailUrl: true, midSizeUrl: true },
+  })
+
   await db.photo.delete({ where: { id: photoId } })
+
+  if (photo) {
+    const blobsToDelete = [photo.blobUrl, photo.thumbnailUrl, photo.midSizeUrl].filter(
+      (url): url is string => url !== null
+    )
+    if (blobsToDelete.length > 0) {
+      try {
+        await del(blobsToDelete)
+      } catch (err) {
+        console.error("[deletePhoto] blob deletion failed:", err)
+      }
+    }
+  }
 
   revalidatePath(`/events/${eventId}/edit`)
   revalidatePath(`/events/${eventId}`)
