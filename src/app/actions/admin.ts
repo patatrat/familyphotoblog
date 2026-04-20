@@ -78,7 +78,10 @@ export async function rejectPhotoAction(photoId: string): Promise<void> {
   await requireAdmin()
   const photo = await db.photo.findUnique({ where: { id: photoId } })
   if (!photo) return
-  await del([photo.blobUrl, photo.thumbnailUrl, photo.midSizeUrl])
+  const blobsToDelete = [photo.blobUrl, photo.thumbnailUrl, photo.midSizeUrl].filter(
+    (url): url is string => url !== null
+  )
+  if (blobsToDelete.length > 0) await del(blobsToDelete)
   await db.photo.delete({ where: { id: photoId } })
   revalidatePath("/admin")
   revalidatePath(`/events/${photo.eventId}`)
