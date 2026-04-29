@@ -9,6 +9,10 @@ updates:
       all-dependencies:
         patterns:
           - "*"
+    ignore:
+      # next-auth peer-depends on nodemailer ^7; ignore major bumps until next-auth supports v8
+      - dependency-name: "nodemailer"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
