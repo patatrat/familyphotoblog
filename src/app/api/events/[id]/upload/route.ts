@@ -6,6 +6,9 @@ import exifr from "exifr"
 import { db } from "@/lib/db"
 import { auth } from "@/auth"
 
+// WASM HEIC decode + large file processing can be slow on cold starts
+export const maxDuration = 30
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
