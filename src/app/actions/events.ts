@@ -130,6 +130,56 @@ export async function deletePhotoAction(photoId: string, eventId: string): Promi
   revalidatePath(`/events/${eventId}`)
 }
 
+export async function unpublishEventAction(eventId: string): Promise<void> {
+  await requireAdmin()
+
+  await db.event.update({
+    where: { id: eventId },
+    data: { status: "DRAFT" },
+  })
+
+  revalidatePath("/")
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath(`/events/${eventId}/edit`)
+}
+
+export async function deleteEventAction(eventId: string): Promise<void> {
+  await requireAdmin()
+
+  const photos = await db.photo.findMany({
+    where: { eventId },
+    select: { id: true, blobUrl: true, thumbnailUrl: true, midSizeUrl: true },
+  })
+
+  const photoIds = photos.map((p) => p.id)
+
+  // Delete child records in dependency order before removing photos and event
+  if (photoIds.length > 0) {
+    await db.reaction.deleteMany({ where: { photoId: { in: photoIds } } })
+    await db.comment.deleteMany({ where: { photoId: { in: photoIds } } })
+    await db.removalRequest.deleteMany({ where: { photoId: { in: photoIds } } })
+    await db.photo.deleteMany({ where: { eventId } })
+  }
+
+  await db.eventTag.deleteMany({ where: { eventId } })
+  await db.event.delete({ where: { id: eventId } })
+
+  const blobsToDelete = photos
+    .flatMap((p) => [p.blobUrl, p.thumbnailUrl, p.midSizeUrl])
+    .filter((url): url is string => url !== null)
+
+  if (blobsToDelete.length > 0) {
+    try {
+      await del(blobsToDelete)
+    } catch (err) {
+      console.error("[deleteEvent] blob deletion failed:", err)
+    }
+  }
+
+  revalidatePath("/")
+  redirect("/")
+}
+
 export async function setFeaturedPhotoAction(eventId: string, photoId: string): Promise<void> {
   await requireAdmin()
 

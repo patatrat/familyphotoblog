@@ -1,9 +1,12 @@
 "use client"
 
 import { useActionState, useCallback, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   updateEventAction,
   publishEventAction,
+  unpublishEventAction,
+  deleteEventAction,
   deletePhotoAction,
   setFeaturedPhotoAction,
 } from "@/app/actions/events"
@@ -25,6 +28,7 @@ type EventData = {
 }
 
 export function EventEditForm({ event }: { event: EventData }) {
+  const router = useRouter()
   const [state, action, pending] = useActionState(updateEventAction, undefined)
   const [photos, setPhotos] = useState<Photo[]>(event.photos)
   const [featuredPhotoId, setFeaturedPhotoId] = useState<string | null>(event.featuredPhotoId)
@@ -89,6 +93,17 @@ export function EventEditForm({ event }: { event: EventData }) {
     if (!confirm("Publish this event? It will be visible to all family members.")) return
     await publishEventAction(event.id)
   }, [event.id])
+
+  const handleUnpublish = useCallback(async () => {
+    if (!confirm("Unpublish this event? It will no longer be visible to family members.")) return
+    await unpublishEventAction(event.id)
+  }, [event.id])
+
+  const handleDeleteEvent = useCallback(async () => {
+    if (!confirm(`Permanently delete "${event.title}" and all its photos? This cannot be undone.`)) return
+    await deleteEventAction(event.id)
+    router.push("/")
+  }, [event.id, event.title, router])
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -231,6 +246,16 @@ export function EventEditForm({ event }: { event: EventData }) {
                   Publish
                 </button>
               )}
+
+              {event.status === "PUBLISHED" && (
+                <button
+                  type="button"
+                  onClick={handleUnpublish}
+                  className="px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Unpublish
+                </button>
+              )}
             </div>
           </form>
         </section>
@@ -347,6 +372,30 @@ export function EventEditForm({ event }: { event: EventData }) {
               })}
             </div>
           )}
+        </section>
+
+        {/* Danger zone */}
+        <section>
+          <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-4">
+            Danger zone
+          </h2>
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-red-200 dark:border-red-900/50 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">Delete this event</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Permanently removes the event and all its photos. Cannot be undone.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleDeleteEvent}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors shrink-0 ml-6"
+              >
+                Delete event
+              </button>
+            </div>
+          </div>
         </section>
       </main>
     </div>
