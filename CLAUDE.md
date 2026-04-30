@@ -153,7 +153,7 @@ Priority scale:
 | CR2 | ✓ Delete comment | P3 | Admin only |
 | CR3 | ✓ Per-photo emoji reactions with counts | P3 | 6 emoji, optimistic toggle |
 | CR4 | ✓ Display total comment count and reaction count on event card | P3 | |
-| CR5 | Hover emoji to see list of users who reacted | P4 | |
+| CR5 | ✓ Hover emoji to see list of users who reacted | P4 | Tooltip above button; optimistic on toggle |
 | CR6 | Tag other users in comments with @name | P4 | |
 | CR7 | Email notification when mentioned in a comment | P4 | |
 | CR8 | User setting: opt out of mention emails | P4 | |

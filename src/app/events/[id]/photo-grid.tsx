@@ -21,6 +21,7 @@ type ReactionGroup = {
   emoji: string
   count: number
   userReacted: boolean
+  users: string[]
 }
 
 type Photo = {
@@ -302,7 +303,12 @@ function InteractionPanel({
     setReactions((prev) =>
       prev.map((r) =>
         r.emoji === emoji
-          ? { ...r, count: r.count + (wasReacted ? -1 : 1), userReacted: !wasReacted }
+          ? {
+              ...r,
+              count: r.count + (wasReacted ? -1 : 1),
+              userReacted: !wasReacted,
+              users: wasReacted ? r.users.filter((u) => u !== "You") : ["You", ...r.users],
+            }
           : r
       )
     )
@@ -345,21 +351,36 @@ function InteractionPanel({
       {/* Reactions */}
       <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex-shrink-0">
         <div className="flex flex-wrap gap-1.5">
-          {reactions.map(({ emoji, count, userReacted }) => (
-            <button
-              key={emoji}
-              onClick={() => handleReaction(emoji)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm transition-colors ${
-                userReacted
-                  ? "bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600"
-                  : "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              <span>{emoji}</span>
-              {count > 0 && (
-                <span className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">{count}</span>
+          {reactions.map(({ emoji, count, userReacted, users }) => (
+            <div key={emoji} className="relative group/reaction">
+              <button
+                onClick={() => handleReaction(emoji)}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm transition-colors ${
+                  userReacted
+                    ? "bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600"
+                    : "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                }`}
+              >
+                <span>{emoji}</span>
+                {count > 0 && (
+                  <span className="text-xs text-zinc-600 dark:text-zinc-300 font-medium">{count}</span>
+                )}
+              </button>
+
+              {users.length > 0 && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-20 pointer-events-none opacity-0 group-hover/reaction:opacity-100 transition-opacity duration-150">
+                  <div className="bg-zinc-900 dark:bg-zinc-700 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap shadow-lg max-w-[180px]">
+                    <span className="block truncate">
+                      {users.slice(0, 5).join(", ")}
+                      {users.length > 5 && ` +${users.length - 5} more`}
+                    </span>
+                  </div>
+                  <div className="w-2 h-1.5 mx-auto overflow-hidden">
+                    <div className="w-2 h-2 bg-zinc-900 dark:bg-zinc-700 rotate-45 translate-y-[-50%] mx-auto" />
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
           ))}
         </div>
       </div>
