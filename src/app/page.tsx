@@ -19,6 +19,7 @@ export default async function HomePage({
       id: true,
       thumbnailUrl: true,
       _count: { select: { comments: true, reactions: true } },
+      reactions: { select: { emoji: true } },
     },
   }
   const tagInclude = { include: { tag: true } }
@@ -220,9 +221,17 @@ function EventGrid({
               {(() => {
                 const totalComments = event.photos.reduce((s, p) => s + p._count.comments, 0)
                 const totalReactions = event.photos.reduce((s, p) => s + p._count.reactions, 0)
+                const allReactions = event.photos.flatMap(
+                  (p) => (p as typeof p & { reactions: { emoji: string }[] }).reactions
+                )
+                const emojiCounts = allReactions.reduce<Record<string, number>>(
+                  (acc, r) => { acc[r.emoji] = (acc[r.emoji] ?? 0) + 1; return acc },
+                  {}
+                )
+                const topEmoji = Object.entries(emojiCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ?? "❤️"
                 return (
                   <>
-                    {totalReactions > 0 && <>{" · "}{totalReactions} ❤️</>}
+                    {totalReactions > 0 && <>{" · "}{totalReactions} {topEmoji}</>}
                     {totalComments > 0 && <>{" · "}{totalComments} 💬</>}
                   </>
                 )

@@ -31,7 +31,7 @@ export default async function EventPage({
             orderBy: { createdAt: "asc" },
             include: { user: { select: { id: true, name: true } } },
           },
-          reactions: { select: { emoji: true, userId: true } },
+          reactions: { select: { emoji: true, userId: true, user: { select: { name: true } } } },
         },
       },
       creator: { select: { name: true } },
@@ -54,13 +54,15 @@ export default async function EventPage({
       userId: c.user.id,
       userName: c.user.name,
     })),
-    reactions: EMOJIS.map((emoji) => ({
-      emoji,
-      count: p.reactions.filter((r) => r.emoji === emoji).length,
-      userReacted: p.reactions.some(
-        (r) => r.emoji === emoji && r.userId === session.user.id
-      ),
-    })),
+    reactions: EMOJIS.map((emoji) => {
+      const reactors = p.reactions.filter((r) => r.emoji === emoji)
+      return {
+        emoji,
+        count: reactors.length,
+        userReacted: reactors.some((r) => r.userId === session.user.id),
+        users: reactors.map((r) => r.userId === session.user.id ? "You" : r.user.name),
+      }
+    }),
   }))
 
   return (
