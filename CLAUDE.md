@@ -112,12 +112,12 @@ Priority scale:
 | E10 | ✓ Archive / all events list page | P3 | |
 | E11 | ✓ Users create new events (pending approval) | P3 | |
 | E12 | ✓ New user-submitted events require admin approval before visible | P3 | |
-| E13 | Bulk photo upload to event | P3 | |
+| E13 | ✓ Bulk photo upload to event | P3 | Concurrent (3 workers), progress counter, cancel, duplicate detection |
 | E14 | Reorder photos during create/edit (drag-and-drop) | P3 | |
 | E15 | Users suggest or add tags to others' events | P4 | |
 | E16 | Restrict event visibility to specific users or groups | P4 | |
 | E17 | Edit event details (title, date, description) by creator after submission | P4 | Currently PENDING events are read-only for creators |
-| E18 | Unpublish / Delete events |P2 | |
+| E18 | ✓ Unpublish / Delete events | P2 | Admin only; delete cascades photos+blobs |
 
 ---
 
@@ -137,7 +137,7 @@ Priority scale:
 | PH10 | ✓ New user-submitted photos require approval before visible | P3 | |
 | PH11 | Download original photo (full-res, requires auth) | P3 | |
 | PH12 | Add caption to photo on upload / edit | P3 | |
-| PH13 | Duplicate photo detection | P4 | Hash comparison on upload |
+| PH13 | ✓ Duplicate photo detection | P3 | SHA-256 hash per event; skipped count shown in UI |
 | PH14 | Simple photo manipulation — rotate, crop, flip | P4 | |
 | PH15 | Toggle: allow users to upload photos (on/off) | P4 | Admin setting |
 | PH16 | Extract location from EXIF before stripping (optional, user opt-in) | P5 | |
@@ -374,18 +374,24 @@ model EventTag {
 
 ## Current Status
 
-All P1 and P2 features complete. Only remaining work is IN9/IN10 (backups). Site is live with a broader family invite underway.
+All P1 and P2 features complete. All remaining P3 features complete except IN9/IN10 (backups) and E14 (photo reorder). Site is live.
 
 ### Infrastructure notes
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
 - `family-photos/` subfolder fully removed; repo root is the Next.js app
 - Dark mode: class-based via ThemeProvider + localStorage, anti-flash inline script, defaults to system preference
 - E2E tests run against staging (`https://photos-staging.radomski.co.nz`) and are opt-in: include `[e2e]` in the commit message to trigger them. Requires `E2E_DATABASE_URL` GitHub Actions secret (staging Neon direct URL).
+- Dependabot configured: monthly grouped npm + GitHub Actions updates; major version bumps ignored for nodemailer, typescript, eslint, @types/node.
 
-### Remaining P3
-1. IN9/IN10 — Scheduled DB and Blob backups
+### Remaining work
+- IN9/IN10 — Scheduled DB and Blob backups (P3)
+- E14 — Drag-and-drop photo reorder (P3)
+- P4 features (see backlog tables above)
 
 ### Recently completed
+- E13 ✓ — Bulk photo upload: concurrent (3 workers), progress counter, cancel button, duplicate detection (SHA-256)
+- E18 ✓ — Unpublish + delete event (admin only); delete cascades all photos and blobs
+- PH13 ✓ — Duplicate photo detection: SHA-256 hash per event, skipped count in UI
 - IN8 ✓ — Playwright E2E tests (19 tests: auth, events, lightbox, admin) running in CI on staging pushes
 - PH8 ✓ — Uploader attribution shown in lightbox
 - E10 ✓ — Archive / all events page (grouped by year, linked from nav)

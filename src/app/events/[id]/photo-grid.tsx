@@ -91,6 +91,7 @@ export function PhotoGrid({
         {photos.map((photo, i) => {
           const totalComments = photo.comments.length
           const totalReactions = photo.reactions.reduce((sum, r) => sum + r.count, 0)
+          const topEmoji = [...photo.reactions].sort((a, b) => b.count - a.count).find((r) => r.count > 0)?.emoji ?? "❤️"
           return (
             <div key={photo.id} className="group relative aspect-square">
               <button
@@ -110,7 +111,7 @@ export function PhotoGrid({
                 <div className="absolute bottom-1.5 left-1.5 flex gap-1 pointer-events-none">
                   {totalReactions > 0 && (
                     <span className="text-xs bg-black/60 text-white px-1.5 py-0.5 rounded-full leading-none">
-                      {totalReactions} ❤️
+                      {totalReactions} {topEmoji}
                     </span>
                   )}
                   {totalComments > 0 && (
