@@ -15,7 +15,6 @@ export default async function ArchivePage() {
         where: { status: "VISIBLE" },
         orderBy: { sortOrder: "asc" },
         select: { id: true, thumbnailUrl: true },
-        take: 1,
       },
       tags: { include: { tag: true } },
       _count: { select: { photos: { where: { status: "VISIBLE" } } } },
