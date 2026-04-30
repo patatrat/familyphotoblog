@@ -94,12 +94,16 @@ export async function publishEventAction(eventId: string): Promise<void> {
   revalidatePath(`/events/${eventId}/edit`)
 
   // Fire-and-forget — email is non-critical and can be slow; don't block the response
-  void db.user
-    .findMany({
-      where: { approved: true, emailNewEvents: true, NOT: { id: session.user.id } },
-      select: { email: true, name: true },
+  void getSettings()
+    .then((settings) => {
+      if (!settings.eventEmailsEnabled) return
+      return db.user
+        .findMany({
+          where: { approved: true, emailNewEvents: true, NOT: { id: session.user.id } },
+          select: { email: true, name: true },
+        })
+        .then((recipients) => sendNewEventEmails(event, recipients))
     })
-    .then((recipients) => sendNewEventEmails(event, recipients))
     .catch((err) => console.error("[publishEvent] email notification failed:", err))
 }
 
@@ -111,6 +115,9 @@ export async function deletePhotoAction(photoId: string, eventId: string): Promi
     select: { blobUrl: true, thumbnailUrl: true, midSizeUrl: true },
   })
 
+  await db.reaction.deleteMany({ where: { photoId } })
+  await db.comment.deleteMany({ where: { photoId } })
+  await db.removalRequest.deleteMany({ where: { photoId } })
   await db.photo.delete({ where: { id: photoId } })
 
   if (photo) {

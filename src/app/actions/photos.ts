@@ -49,7 +49,6 @@ export async function resolveRemovalAction(
   if (!request) return
 
   if (resolution === "delete") {
-    // Delete blobs, then the photo row (cascades removal request)
     const blobsToDelete = [
       request.photo.blobUrl,
       request.photo.thumbnailUrl,
@@ -62,6 +61,10 @@ export async function resolveRemovalAction(
         console.error("[resolveRemoval] blob deletion failed:", err)
       }
     }
+    // Delete child records in FK order before removing the photo row
+    await db.reaction.deleteMany({ where: { photoId: request.photoId } })
+    await db.comment.deleteMany({ where: { photoId: request.photoId } })
+    await db.removalRequest.delete({ where: { id: requestId } })
     await db.photo.delete({ where: { id: request.photoId } })
   } else {
     await db.photo.update({

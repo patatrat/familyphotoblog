@@ -50,6 +50,12 @@ export default async function AdminSettingsPage() {
             name="userPhotosEnabled"
             value={settings.userPhotosEnabled}
           />
+          <ToggleRow
+            label="New event email notifications"
+            description="Send an email to all family members when a new event is published. Turn off when bulk-loading events at the start."
+            name="eventEmailsEnabled"
+            value={settings.eventEmailsEnabled}
+          />
           <div className="px-6 py-4">
             <button
               type="submit"
