@@ -214,6 +214,10 @@ Priority scale:
 | SE3 | ✓ EXIF stripping on upload | P1 | GPS data removed before storage |
 | SE4 | ✓ Rate limiting on magic link requests | P1 | Per-IP and per-email |
 | SE5 | Subresource Integrity for any external scripts | P4 | None currently used |
+| SE6 | ✓ Blob proxy requires approved session | P1 | Unapproved users blocked from /api/blob even with valid session |
+| SE7 | ✓ Auth.js magic-link guard — sendVerificationRequest checks user exists | P1 | Prevents email spam via POST /api/auth/signin/nodemailer |
+| SE8 | ✓ Generic error responses from upload route | P1 | Prevents Prisma/Blob schema leakage via error messages |
+| SE9 | ✓ Photo removal action validates event is PUBLISHED | P1 | Prevents hiding photos from draft events or re-hiding after restore |
 
 ---
 
@@ -389,6 +393,7 @@ All P1 and P2 features complete. All remaining P3 features complete except IN9/I
 - P4 features (see backlog tables above)
 
 ### Recently completed
+- Security ✓ — 5 vulnerabilities resolved: blob proxy approval check; upload error message leakage; Auth.js magic-link rate-limit bypass via `POST /api/auth/signin/nodemailer`; photo removal action event-status guard; conflicting CSP headers between proxy.ts and next.config.ts
 - E13 ✓ — Bulk photo upload: concurrent (3 workers), progress counter, cancel button, duplicate detection (SHA-256)
 - E18 ✓ — Unpublish + delete event (admin only); delete cascades all photos and blobs
 - PH13 ✓ — Duplicate photo detection: SHA-256 hash per event, skipped count in UI
