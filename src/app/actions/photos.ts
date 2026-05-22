@@ -11,8 +11,17 @@ export async function requestRemovalAction(
 ): Promise<{ error?: string }> {
   const session = await requireApproved()
 
-  const photo = await db.photo.findUnique({ where: { id: photoId } })
+  const photo = await db.photo.findUnique({
+    where: { id: photoId },
+    include: { event: { select: { status: true } } },
+  })
   if (!photo) return { error: "Photo not found." }
+
+  // Only allow removal requests on photos from published events
+  if (photo.event.status !== "PUBLISHED") return { error: "Photo not found." }
+
+  // Prevent re-hiding if already hidden (blocks restore-then-immediately-rehide abuse)
+  if (photo.status === "HIDDEN") return { error: "A removal request is already pending for this photo." }
 
   // Hide immediately — removal request is admin's to resolve
   await db.photo.update({ where: { id: photoId }, data: { status: "HIDDEN" } })

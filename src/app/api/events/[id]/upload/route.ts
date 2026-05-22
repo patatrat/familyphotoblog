@@ -89,7 +89,7 @@ export async function POST(
       } catch (heicErr) {
         const heicMsg = heicErr instanceof Error ? heicErr.message : String(heicErr)
         console.error(`[upload] HEIC conversion failed for "${file.name}" (${file.size} bytes): ${heicMsg}`)
-        return NextResponse.json({ error: `Could not convert HEIC file: ${heicMsg}` }, { status: 422 })
+        return NextResponse.json({ error: "Could not process HEIC file. Please convert to JPEG and try again." }, { status: 422 })
       }
     }
 
@@ -130,7 +130,6 @@ export async function POST(
     })
   } catch (err) {
     console.error("[upload] error:", err)
-    const message = err instanceof Error ? err.message : "Unknown error"
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 })
   }
 }

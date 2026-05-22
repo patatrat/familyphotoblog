@@ -4,8 +4,12 @@ import { auth } from "@/auth"
 
 export async function GET(req: NextRequest) {
   const session = await auth()
+  const user = session?.user as { approved?: boolean } | undefined
   if (!session?.user) {
     return new NextResponse("Unauthorized", { status: 401 })
+  }
+  if (!user?.approved) {
+    return new NextResponse("Forbidden", { status: 403 })
   }
 
   const url = req.nextUrl.searchParams.get("url")
