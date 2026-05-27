@@ -113,10 +113,10 @@ Priority scale:
 | E11 | ✓ Users create new events (pending approval) | P3 | |
 | E12 | ✓ New user-submitted events require admin approval before visible | P3 | |
 | E13 | ✓ Bulk photo upload to event | P3 | Concurrent (3 workers), progress counter, cancel, duplicate detection |
-| E14 | Reorder photos during create/edit (drag-and-drop) | P3 | |
-| E15 | Users suggest or add tags to others' events | P4 | |
+| E14 | ✓ Reorder photos during create/edit (drag-and-drop) | P3 | |
+| E15 | ✓ Users suggest or add tags to others' events | P4 | Any approved user can add tags to PUBLISHED events via inline input on event page |
 | E16 | Restrict event visibility to specific users or groups | P4 | |
-| E17 | Edit event details (title, date, description) by creator after submission | P4 | Currently PENDING events are read-only for creators |
+| E17 | ✓ Edit event details (title, date, description) by creator after submission | P4 | Creators can edit PENDING events via inline form on event page |
 | E18 | ✓ Unpublish / Delete events | P2 | Admin only; delete cascades photos+blobs |
 
 ---
@@ -136,7 +136,7 @@ Priority scale:
 | PH9 | ✓ Users upload photos to existing events (pending approval) | P3 | |
 | PH10 | ✓ New user-submitted photos require approval before visible | P3 | |
 | PH11 | Download original photo (full-res, requires auth) | P3 | |
-| PH12 | Add caption to photo on upload / edit | P3 | |
+| PH12 | ✓ Add caption to photo on upload / edit | P3 | Inline per-photo caption input in admin edit form; blur-to-save |
 | PH13 | ✓ Duplicate photo detection | P3 | SHA-256 hash per event; skipped count shown in UI |
 | PH14 | Simple photo manipulation — rotate, crop, flip | P4 | |
 | PH15 | Toggle: allow users to upload photos (on/off) | P4 | Admin setting |
@@ -157,7 +157,7 @@ Priority scale:
 | CR6 | ✓ Tag other users in comments with @name | P4 | @[Name](userId) format; autocomplete dropdown on @ |
 | CR7 | ✓ Email notification when mentioned in a comment | P4 | Fire-and-forget; respects emailMentions setting |
 | CR8 | ✓ User setting: opt out of mention emails | P4 | Toggle in /account |
-| CR9 | Profanity filter on comments | P4 | |
+| CR9 | ✓ Profanity filter on comments | P4 | Regex blocklist in addCommentAction; returns error (no auto-censor) |
 | CR10 | Email notification to uploader when their submitted photo is approved or rejected | P4 | |
 | CR11 | Email notification to submitter when their event is approved or rejected | P4 | |
 | CR12 | ✓ In app notifications, displaying reactions, tags, comment mentions | P4 | Bell icon in nav; NEW_EVENT, MENTION, REACTION; mark-all-read |
@@ -398,6 +398,7 @@ All P1, P2, and P3 features complete. Several P4 features also done. Site is liv
 - P4 features (see backlog tables above)
 
 ### Recently completed
+- PH12/E17/E15/CR9 ✓ — Photo captions (inline per-photo input in edit form, blur-to-save); creators can view/edit PENDING events (inline form with amber notice); any user can add tags to PUBLISHED events; profanity filter on comments (blocklist regex, returns error)
 - CR6/CR7/CR8/CR12 ✓ — @mentions in comments (autocomplete, @[Name](userId) storage, highlighted render); MENTION + REACTION + NEW_EVENT in-app notifications (bell icon in nav with unread badge + dropdown); mention emails; emailMentions opt-out in /account
 - E14 ✓ — Drag-and-drop photo reorder in event edit page
 - IN9/IN10 ✓ — Daily DB backup (pg_dump → S3 STANDARD_IA) + incremental blob sync (Vercel → S3); `.github/workflows/backup.yml`; requires 6 GitHub Actions secrets (see README)
