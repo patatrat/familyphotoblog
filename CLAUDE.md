@@ -154,13 +154,13 @@ Priority scale:
 | CR3 | ✓ Per-photo emoji reactions with counts | P3 | 6 emoji, optimistic toggle |
 | CR4 | ✓ Display total comment count and reaction count on event card | P3 | |
 | CR5 | ✓ Hover emoji to see list of users who reacted | P4 | Tooltip above button; optimistic on toggle |
-| CR6 | Tag other users in comments with @name | P4 | |
-| CR7 | Email notification when mentioned in a comment | P4 | |
-| CR8 | User setting: opt out of mention emails | P4 | |
+| CR6 | ✓ Tag other users in comments with @name | P4 | @[Name](userId) format; autocomplete dropdown on @ |
+| CR7 | ✓ Email notification when mentioned in a comment | P4 | Fire-and-forget; respects emailMentions setting |
+| CR8 | ✓ User setting: opt out of mention emails | P4 | Toggle in /account |
 | CR9 | Profanity filter on comments | P4 | |
 | CR10 | Email notification to uploader when their submitted photo is approved or rejected | P4 | |
 | CR11 | Email notification to submitter when their event is approved or rejected | P4 | |
-| CR12 | In app notifications, displaying reactions, tags, comment mentions | P4 | |
+| CR12 | ✓ In app notifications, displaying reactions, tags, comment mentions | P4 | Bell icon in nav; NEW_EVENT, MENTION, REACTION; mark-all-read |
 | CR13 | Report comment | P4 | |
 
 ---
@@ -188,8 +188,8 @@ Priority scale:
 | EM2 | ✓ Magic link email — login | P1 | |
 | EM3 | ✓ Email sent when new event is published | P3 | |
 | EM4 | ✓ User setting: opt out of new event emails (opt-in default) | P3 | |
-| EM5 | Email when mentioned in a comment | P4 | |
-| EM6 | User setting: opt out of mention emails | P4 | |
+| EM5 | ✓ Email when mentioned in a comment | P4 | |
+| EM6 | ✓ User setting: opt out of mention emails | P4 | |
 
 ---
 
@@ -378,7 +378,7 @@ model EventTag {
 
 ## Current Status
 
-All P1, P2, and P3 features complete except E14 (photo reorder) and UI7 (UX review). Site is live.
+All P1, P2, and P3 features complete. Several P4 features also done. Site is live.
 
 ### Infrastructure notes
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
@@ -394,11 +394,12 @@ All P1, P2, and P3 features complete except E14 (photo reorder) and UI7 (UX revi
 - `postcss` in `next` internals — bundled; not exposed to user-controlled CSS.
 
 ### Remaining work
-- E14 — Drag-and-drop photo reorder (P3)
 - UI7 — UI/UX review with specialised agent skill (P3)
 - P4 features (see backlog tables above)
 
 ### Recently completed
+- CR6/CR7/CR8/CR12 ✓ — @mentions in comments (autocomplete, @[Name](userId) storage, highlighted render); MENTION + REACTION + NEW_EVENT in-app notifications (bell icon in nav with unread badge + dropdown); mention emails; emailMentions opt-out in /account
+- E14 ✓ — Drag-and-drop photo reorder in event edit page
 - IN9/IN10 ✓ — Daily DB backup (pg_dump → S3 STANDARD_IA) + incremental blob sync (Vercel → S3); `.github/workflows/backup.yml`; requires 6 GitHub Actions secrets (see README)
 - Branch cleanup ✓ — Deleted 4 stale merged branches; added vercel-ignored-build-step.sh
 - Security ✓ — 5 vulnerabilities resolved: blob proxy approval check; upload error message leakage; Auth.js magic-link rate-limit bypass via `POST /api/auth/signin/nodemailer`; photo removal action event-status guard; conflicting CSP headers between proxy.ts and next.config.ts
