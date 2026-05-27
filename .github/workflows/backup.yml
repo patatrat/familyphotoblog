@@ -1,0 +1,58 @@
+name: Daily Backup
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 01:00 UTC daily (1–2pm NZT)
+  workflow_dispatch:      # manual trigger for testing
+
+jobs:
+  backup-db:
+    name: Database backup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Dump database to S3
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          pg_dump "$DATABASE_DIRECT_URL" \
+            --format=custom \
+            --no-password \
+          | aws s3 cp - \
+              "s3://${BACKUP_S3_BUCKET}/db/photos-${DATE}.dump" \
+              --storage-class STANDARD_IA
+          echo "DB backup complete: photos-${DATE}.dump"
+        env:
+          DATABASE_DIRECT_URL: ${{ secrets.BACKUP_DATABASE_DIRECT_URL }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION }}
+
+  backup-blobs:
+    name: Blob backup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Pin npm version
+        run: npm install -g npm@11.6.2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync blobs to S3
+        run: node scripts/backup-blobs.mjs
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.BACKUP_AWS_REGION }}
