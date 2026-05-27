@@ -310,6 +310,8 @@ function InteractionPanel({
   const [commentError, setCommentError] = useState<string | null>(null)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionStart, setMentionStart] = useState(-1)
+  // Maps display name → userId for mentions inserted via autocomplete
+  const pendingMentions = useRef<Map<string, string>>(new Map())
   const commentsEndRef = useRef<HTMLDivElement>(null)
   const commentInputRef = useRef<HTMLInputElement>(null)
 
@@ -338,10 +340,21 @@ function InteractionPanel({
   function handleSelectMention(user: UserSummary) {
     const before = commentText.slice(0, mentionStart)
     const after = commentText.slice(mentionStart + 1 + (mentionQuery?.length ?? 0))
-    setCommentText(before + `@[${user.name}](${user.id}) ` + after)
+    // Show clean @Name in the input; store userId mapping for submit
+    setCommentText(before + `@${user.name} ` + after)
+    pendingMentions.current.set(user.name, user.id)
     setMentionQuery(null)
     setMentionStart(-1)
     setTimeout(() => commentInputRef.current?.focus(), 0)
+  }
+
+  // Converts display text like "@TVS nice shot" → "@[TVS](userId) nice shot"
+  function buildRawContent(displayText: string): string {
+    if (pendingMentions.current.size === 0) return displayText
+    return displayText.replace(/@([^\s@]+)/g, (match, name) => {
+      const userId = pendingMentions.current.get(name)
+      return userId ? `@[${name}](${userId})` : match
+    })
   }
 
   const handleReaction = async (emoji: string) => {
@@ -364,26 +377,28 @@ function InteractionPanel({
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault()
-    const text = commentText.trim()
-    if (!text || submitting) return
+    const displayText = commentText.trim()
+    if (!displayText || submitting) return
+    const rawContent = buildRawContent(displayText)
     setSubmitting(true)
     setCommentError(null)
     const tempId = `temp-${Date.now()}`
     const tempComment: Comment = {
       id: tempId,
-      content: text,
+      content: rawContent,
       createdAt: new Date().toISOString(),
       userId: currentUserId,
       userName: "You",
     }
     setComments((prev) => [...prev, tempComment])
     setCommentText("")
+    pendingMentions.current.clear()
     setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
-    const result = await addCommentAction(photo.id, text)
+    const result = await addCommentAction(photo.id, rawContent)
     if (result.error) {
       setComments((prev) => prev.filter((c) => c.id !== tempId))
       setCommentError(result.error)
-      setCommentText(text)
+      setCommentText(displayText)
     }
     setSubmitting(false)
   }
