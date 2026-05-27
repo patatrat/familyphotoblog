@@ -382,6 +382,7 @@ function InteractionPanel({
     const rawContent = buildRawContent(displayText)
     setSubmitting(true)
     setCommentError(null)
+    // eslint-disable-next-line react-hooks/purity
     const tempId = `temp-${Date.now()}`
     const tempComment: Comment = {
       id: tempId,

@@ -11,6 +11,7 @@ import {
   setFeaturedPhotoAction,
   reorderPhotosAction,
 } from "@/app/actions/events"
+import { updatePhotoCaptionAction } from "@/app/actions/photos"
 import { blobProxy } from "@/lib/blob-url"
 import { usePhotoUpload } from "@/hooks/use-photo-upload"
 import Link from "next/link"
@@ -390,48 +391,64 @@ export function EventEditForm({ event }: { event: EventData }) {
                       onDragOver={(e) => handlePhotoDragOver(e, i)}
                       onDrop={(e) => handlePhotoDrop(e, i)}
                       onDragEnd={handlePhotoDragEnd}
-                      className={`group relative aspect-square cursor-grab active:cursor-grabbing rounded-lg transition-opacity ${
+                      className={`group flex flex-col cursor-grab active:cursor-grabbing rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 transition-opacity ${
                         isDragging ? "opacity-40" : "opacity-100"
                       } ${isTarget ? "ring-2 ring-blue-500" : ""}`}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={blobProxy(photo.thumbnailUrl)}
-                        alt={photo.caption ?? "Photo"}
-                        className="w-full h-full object-cover rounded-lg pointer-events-none"
-                        draggable={false}
-                      />
+                      {/* Thumbnail */}
+                      <div className="relative aspect-square">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={blobProxy(photo.thumbnailUrl)}
+                          alt={photo.caption ?? "Photo"}
+                          className="w-full h-full object-cover pointer-events-none"
+                          draggable={false}
+                        />
 
-                      {/* Cover badge */}
-                      {isCover && (
-                        <span className="absolute bottom-1 left-1 text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded font-medium pointer-events-none">
-                          Cover
-                        </span>
-                      )}
+                        {/* Cover badge */}
+                        {isCover && (
+                          <span className="absolute bottom-1 left-1 text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded font-medium pointer-events-none">
+                            Cover
+                          </span>
+                        )}
 
-                      {/* Hover controls */}
-                      <div className="absolute inset-0 rounded-lg hidden group-hover:flex flex-col items-end justify-between p-1 bg-black/10">
-                        {/* Delete */}
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(photo.id)}
-                          className="w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
-                          aria-label="Delete photo"
-                        >
-                          ×
-                        </button>
-
-                        {/* Set as cover */}
-                        {!isCover && (
+                        {/* Hover controls */}
+                        <div className="absolute inset-0 hidden group-hover:flex flex-col items-end justify-between p-1 bg-black/10">
                           <button
                             type="button"
-                            onClick={() => handleSetFeatured(photo.id)}
-                            className="text-xs bg-black/60 text-white px-1.5 py-0.5 rounded hover:bg-amber-500 transition-colors"
+                            onClick={() => handleDelete(photo.id)}
+                            className="w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
+                            aria-label="Delete photo"
                           >
-                            Set cover
+                            ×
                           </button>
-                        )}
+                          {!isCover && (
+                            <button
+                              type="button"
+                              onClick={() => handleSetFeatured(photo.id)}
+                              className="text-xs bg-black/60 text-white px-1.5 py-0.5 rounded hover:bg-amber-500 transition-colors"
+                            >
+                              Set cover
+                            </button>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Caption input */}
+                      <input
+                        type="text"
+                        defaultValue={photo.caption ?? ""}
+                        placeholder="Add caption…"
+                        maxLength={200}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onBlur={(e) => {
+                          const val = e.target.value
+                          if (val !== (photo.caption ?? "")) {
+                            updatePhotoCaptionAction(photo.id, val)
+                          }
+                        }}
+                        className="px-2 py-1.5 text-xs border-t border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-zinc-400 dark:focus:ring-zinc-500 w-full cursor-text"
+                      />
                     </div>
                   )
                 })}

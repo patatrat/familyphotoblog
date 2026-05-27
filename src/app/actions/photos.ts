@@ -5,6 +5,20 @@ import { del } from "@vercel/blob"
 import { db } from "@/lib/db"
 import { requireApproved, requireAdmin } from "@/lib/session"
 
+export async function updatePhotoCaptionAction(
+  photoId: string,
+  caption: string
+): Promise<{ error?: string }> {
+  await requireAdmin()
+  const trimmed = caption.trim()
+  const photo = await db.photo.findUnique({ where: { id: photoId }, select: { eventId: true } })
+  if (!photo) return { error: "Photo not found." }
+  await db.photo.update({ where: { id: photoId }, data: { caption: trimmed || null } })
+  revalidatePath(`/events/${photo.eventId}`)
+  revalidatePath(`/events/${photo.eventId}/edit`)
+  return {}
+}
+
 export async function requestRemovalAction(
   photoId: string,
   reason: string

@@ -3,6 +3,8 @@ import { getSettings } from "@/lib/settings"
 import { db } from "@/lib/db"
 import { Nav } from "@/components/nav"
 import { PhotoGrid } from "./photo-grid"
+import { PendingEventEditForm } from "./pending-event-edit-form"
+import { TagSuggestion } from "./tag-suggestion"
 import { UserPhotoUpload } from "@/components/user-photo-upload"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -35,7 +37,8 @@ export default async function EventPage({
             reactions: { select: { emoji: true, userId: true, user: { select: { name: true } } } },
           },
         },
-        creator: { select: { name: true } },
+        creator: { select: { id: true, name: true } },
+        tags: { include: { tag: true } },
       },
     }),
     db.user.findMany({
@@ -46,7 +49,8 @@ export default async function EventPage({
   ])
 
   if (!event) notFound()
-  if (event.status !== "PUBLISHED" && !isAdmin) notFound()
+  const isCreator = event.createdBy === session.user.id
+  if (event.status !== "PUBLISHED" && !isAdmin && !isCreator) notFound()
 
   const photos = event.photos.map((p) => ({
     id: p.id,
@@ -115,6 +119,17 @@ export default async function EventPage({
                   {event.description}
                 </p>
               )}
+
+              {event.status === "PUBLISHED" && (
+                <TagSuggestion
+                  eventId={id}
+                  initialTags={event.tags.map((t) => ({
+                    id: t.tag.id,
+                    name: t.tag.name,
+                    slug: t.tag.slug,
+                  }))}
+                />
+              )}
             </div>
 
             {isAdmin && (
@@ -127,6 +142,23 @@ export default async function EventPage({
             )}
           </div>
         </div>
+
+        {/* Pending event: show edit form + notice to creator */}
+        {event.status === "PENDING" && isCreator && !isAdmin && (
+          <div className="mb-8 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 space-y-4">
+            <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+              Your event is pending admin approval. You can still edit the details below.
+            </p>
+            <PendingEventEditForm
+              event={{
+                id: event.id,
+                title: event.title,
+                date: event.date.toISOString().split("T")[0],
+                description: event.description ?? "",
+              }}
+            />
+          </div>
+        )}
 
         {event.photos.length === 0 ? (
           <p className="text-center text-zinc-400 dark:text-zinc-500 py-20">

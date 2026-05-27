@@ -5,6 +5,9 @@ import { db } from "@/lib/db"
 import { requireApproved, requireAdmin } from "@/lib/session"
 import { sendMentionEmail } from "@/lib/email"
 
+// Basic profanity blocklist — intentionally short to avoid false positives on a family blog
+const PROFANITY_RE = /\b(fuck|shit|cunt|cock|dick|pussy|asshole|motherfucker|faggot|nigger|nigga)\b/i
+
 const MENTION_RE = /@\[([^\]]+)\]\(([^)]+)\)/g
 
 function parseMentions(content: string): { name: string; userId: string }[] {
@@ -25,6 +28,7 @@ export async function addCommentAction(
   const trimmed = content.trim()
   if (!trimmed) return { error: "Comment cannot be empty." }
   if (trimmed.length > 1000) return { error: "Comment too long (max 1000 characters)." }
+  if (PROFANITY_RE.test(trimmed)) return { error: "Comment contains inappropriate language." }
 
   const photo = await db.photo.findUnique({
     where: { id: photoId },

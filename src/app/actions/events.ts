@@ -6,7 +6,7 @@ import { del } from "@vercel/blob"
 import { db } from "@/lib/db"
 import { requireApproved, requireAdmin } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
-import { setEventTags } from "@/lib/tags"
+import { setEventTags, toSlug } from "@/lib/tags"
 import { sendNewEventEmails } from "@/lib/email"
 
 export type EventFormState = { error?: string } | undefined
@@ -54,7 +54,8 @@ export async function updateEventAction(
   prevState: EventFormState,
   formData: FormData
 ): Promise<EventFormState> {
-  await requireAdmin()
+  const session = await requireApproved()
+  const isAdmin = session.user.role === "ADMIN"
 
   const id = formData.get("id") as string
   const title = (formData.get("title") as string)?.trim()
@@ -67,13 +68,25 @@ export async function updateEventAction(
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return { error: "Invalid date." }
 
-  const tagsRaw = (formData.get("tags") as string) ?? ""
+  if (!isAdmin) {
+    const event = await db.event.findUnique({
+      where: { id },
+      select: { createdBy: true, status: true },
+    })
+    if (!event || event.createdBy !== session.user.id || event.status !== "PENDING") {
+      return { error: "Not authorized to edit this event." }
+    }
+  }
 
   await db.event.update({
     where: { id },
     data: { title, date, description },
   })
-  await setEventTags(id, tagsRaw)
+
+  if (isAdmin) {
+    const tagsRaw = (formData.get("tags") as string) ?? ""
+    await setEventTags(id, tagsRaw)
+  }
 
   revalidatePath("/")
   revalidatePath(`/events/${id}`)
@@ -243,4 +256,38 @@ export async function setFeaturedPhotoAction(eventId: string, photoId: string): 
   revalidatePath("/")
   revalidatePath(`/events/${eventId}`)
   revalidatePath(`/events/${eventId}/edit`)
+}
+
+export async function addEventTagAction(
+  eventId: string,
+  tagName: string
+): Promise<{ error?: string }> {
+  await requireApproved()
+
+  const name = tagName.trim()
+  if (!name) return { error: "Tag name is required." }
+  if (name.length > 50) return { error: "Tag name too long." }
+
+  const event = await db.event.findUnique({
+    where: { id: eventId },
+    select: { status: true },
+  })
+  if (!event || event.status !== "PUBLISHED") return { error: "Event not found." }
+
+  const slug = toSlug(name)
+  const tag = await db.tag.upsert({
+    where: { slug },
+    update: {},
+    create: { name, slug },
+  })
+
+  await db.eventTag.upsert({
+    where: { eventId_tagId: { eventId, tagId: tag.id } },
+    update: {},
+    create: { eventId, tagId: tag.id },
+  })
+
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath("/")
+  return {}
 }
