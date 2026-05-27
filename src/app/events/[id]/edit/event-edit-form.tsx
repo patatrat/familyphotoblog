@@ -9,6 +9,7 @@ import {
   deleteEventAction,
   deletePhotoAction,
   setFeaturedPhotoAction,
+  reorderPhotosAction,
 } from "@/app/actions/events"
 import { blobProxy } from "@/lib/blob-url"
 import { usePhotoUpload } from "@/hooks/use-photo-upload"
@@ -34,6 +35,9 @@ export function EventEditForm({ event }: { event: EventData }) {
   const [featuredPhotoId, setFeaturedPhotoId] = useState<string | null>(event.featuredPhotoId)
   const [saved, setSaved] = useState(false)
   const submitted = useRef(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOver, setDragOver] = useState<number | null>(null)
+  const [reorderSaving, setReorderSaving] = useState(false)
 
   const { handleUpload, cancel, isUploading, progress, errors: uploadErrors, skipped } = usePhotoUpload(
     event.id,
@@ -87,6 +91,40 @@ export function EventEditForm({ event }: { event: EventData }) {
       setFeaturedPhotoId(photoId)
     },
     [event.id]
+  )
+
+  const handlePhotoDragStart = useCallback((i: number) => {
+    setDragIndex(i)
+  }, [])
+
+  const handlePhotoDragOver = useCallback((e: React.DragEvent, i: number) => {
+    e.preventDefault()
+    setDragOver(i)
+  }, [])
+
+  const handlePhotoDragEnd = useCallback(() => {
+    setDragIndex(null)
+    setDragOver(null)
+  }, [])
+
+  const handlePhotoDrop = useCallback(
+    async (e: React.DragEvent, i: number) => {
+      e.preventDefault()
+      setDragOver(null)
+      if (dragIndex === null || dragIndex === i) {
+        setDragIndex(null)
+        return
+      }
+      const reordered = [...photos]
+      const [moved] = reordered.splice(dragIndex, 1)
+      reordered.splice(i, 0, moved)
+      setPhotos(reordered)
+      setDragIndex(null)
+      setReorderSaving(true)
+      await reorderPhotosAction(event.id, reordered.map((p) => p.id))
+      setReorderSaving(false)
+    },
+    [dragIndex, photos, event.id]
   )
 
   const handlePublish = useCallback(async () => {
@@ -325,52 +363,80 @@ export function EventEditForm({ event }: { event: EventData }) {
           )}
 
           {photos.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {photos.map((photo) => {
-                const isCover = photo.id === featuredPhotoId
-                return (
-                  <div key={photo.id} className="group relative aspect-square">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={blobProxy(photo.thumbnailUrl)}
-                      alt={photo.caption ?? "Photo"}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
+            <>
+              <div className="flex items-center justify-between mb-2">
+                {photos.length > 1 && (
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                    Drag to reorder
+                  </p>
+                )}
+                {reorderSaving && (
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 ml-auto">
+                    Saving order…
+                  </p>
+                )}
+              </div>
 
-                    {/* Cover badge */}
-                    {isCover && (
-                      <span className="absolute bottom-1 left-1 text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded font-medium pointer-events-none">
-                        Cover
-                      </span>
-                    )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {photos.map((photo, i) => {
+                  const isCover = photo.id === featuredPhotoId
+                  const isDragging = dragIndex === i
+                  const isTarget = dragOver === i && dragIndex !== null && dragIndex !== i
+                  return (
+                    <div
+                      key={photo.id}
+                      draggable
+                      onDragStart={() => handlePhotoDragStart(i)}
+                      onDragOver={(e) => handlePhotoDragOver(e, i)}
+                      onDrop={(e) => handlePhotoDrop(e, i)}
+                      onDragEnd={handlePhotoDragEnd}
+                      className={`group relative aspect-square cursor-grab active:cursor-grabbing rounded-lg transition-opacity ${
+                        isDragging ? "opacity-40" : "opacity-100"
+                      } ${isTarget ? "ring-2 ring-blue-500" : ""}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={blobProxy(photo.thumbnailUrl)}
+                        alt={photo.caption ?? "Photo"}
+                        className="w-full h-full object-cover rounded-lg pointer-events-none"
+                        draggable={false}
+                      />
 
-                    {/* Hover controls */}
-                    <div className="absolute inset-0 rounded-lg hidden group-hover:flex flex-col items-end justify-between p-1 bg-black/10">
-                      {/* Delete */}
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(photo.id)}
-                        className="w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
-                        aria-label="Delete photo"
-                      >
-                        ×
-                      </button>
+                      {/* Cover badge */}
+                      {isCover && (
+                        <span className="absolute bottom-1 left-1 text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded font-medium pointer-events-none">
+                          Cover
+                        </span>
+                      )}
 
-                      {/* Set as cover */}
-                      {!isCover && (
+                      {/* Hover controls */}
+                      <div className="absolute inset-0 rounded-lg hidden group-hover:flex flex-col items-end justify-between p-1 bg-black/10">
+                        {/* Delete */}
                         <button
                           type="button"
-                          onClick={() => handleSetFeatured(photo.id)}
-                          className="text-xs bg-black/60 text-white px-1.5 py-0.5 rounded hover:bg-amber-500 transition-colors"
+                          onClick={() => handleDelete(photo.id)}
+                          className="w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
+                          aria-label="Delete photo"
                         >
-                          Set cover
+                          ×
                         </button>
-                      )}
+
+                        {/* Set as cover */}
+                        {!isCover && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetFeatured(photo.id)}
+                            className="text-xs bg-black/60 text-white px-1.5 py-0.5 rounded hover:bg-amber-500 transition-colors"
+                          >
+                            Set cover
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            </>
           )}
         </section>
 

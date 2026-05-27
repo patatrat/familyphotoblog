@@ -187,6 +187,32 @@ export async function deleteEventAction(eventId: string): Promise<void> {
   redirect("/")
 }
 
+export async function reorderPhotosAction(
+  eventId: string,
+  orderedPhotoIds: string[]
+): Promise<{ error?: string }> {
+  await requireAdmin()
+
+  const photos = await db.photo.findMany({
+    where: { eventId, id: { in: orderedPhotoIds } },
+    select: { id: true },
+  })
+
+  if (photos.length !== orderedPhotoIds.length) {
+    return { error: "Some photos do not belong to this event." }
+  }
+
+  await db.$transaction(
+    orderedPhotoIds.map((id, index) =>
+      db.photo.update({ where: { id }, data: { sortOrder: index } })
+    )
+  )
+
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath(`/events/${eventId}/edit`)
+  return {}
+}
+
 export async function setFeaturedPhotoAction(eventId: string, photoId: string): Promise<void> {
   await requireAdmin()
 
