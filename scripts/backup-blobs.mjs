@@ -80,32 +80,47 @@ async function main() {
 
   for (const blob of toBackup) {
     const s3Key = `${S3_PREFIX}${blob.pathname}`;
-    try {
-      const res = await fetch(blob.url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status} from Vercel`);
+    let lastErr;
+    let uploaded = false;
 
-      const body = Buffer.from(await res.arrayBuffer());
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(blob.url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status} from Vercel`);
 
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: bucket,
-          Key: s3Key,
-          Body: body,
-          ContentType: blob.contentType ?? "application/octet-stream",
-          StorageClass: "STANDARD_IA",
-          Metadata: {
-            "vercel-url": blob.url,
-            "blob-size": String(blob.size),
-            "blob-uploaded-at": blob.uploadedAt?.toISOString() ?? "",
-          },
-        })
-      );
-      console.log(`  ✓ ${blob.pathname}`);
-      success++;
-    } catch (err) {
-      console.error(`  ✗ ${blob.pathname}: ${err.message}`);
+        const body = Buffer.from(await res.arrayBuffer());
+
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: bucket,
+            Key: s3Key,
+            Body: body,
+            ContentType: blob.contentType ?? "application/octet-stream",
+            StorageClass: "STANDARD_IA",
+            Metadata: {
+              "vercel-url": blob.url,
+              "blob-size": String(blob.size),
+              "blob-uploaded-at": blob.uploadedAt?.toISOString() ?? "",
+            },
+          })
+        );
+        console.log(`  ✓ ${blob.pathname}`);
+        success++;
+        uploaded = true;
+        break;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < 3) {
+          console.warn(`  ↻ ${blob.pathname}: ${err.message} (retry ${attempt}/3)`);
+          await new Promise((r) => setTimeout(r, attempt * 2000));
+        }
+      }
+    }
+
+    if (!uploaded) {
+      console.error(`  ✗ ${blob.pathname}: ${lastErr.message}`);
       failed++;
     }
   }
