@@ -139,6 +139,42 @@ Set `scripts/vercel-ignored-build-step.sh` as the "Ignored Build Step" command i
 
 ---
 
+## Backups
+
+Daily backups run via `.github/workflows/backup.yml` at 01:00 UTC:
+
+- **Database (IN9):** `pg_dump --format=custom` piped to `s3://bucket/db/photos-YYYY-MM-DD.dump` with `STANDARD_IA` storage class.
+- **Blobs (IN10):** Incremental sync of all Vercel Blob objects to `s3://bucket/blobs/`. Only new blobs are uploaded on each run; existing ones are skipped.
+
+### Required GitHub Actions secrets
+
+| Secret | Value |
+|--------|-------|
+| `BACKUP_DATABASE_DIRECT_URL` | Neon direct (non-pooler) connection string |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob token (already set for CI) |
+| `BACKUP_S3_BUCKET` | S3 bucket name |
+| `BACKUP_AWS_ACCESS_KEY_ID` | AWS IAM key with `s3:PutObject`, `s3:GetObject`, `s3:ListBucket` on the backup bucket |
+| `BACKUP_AWS_SECRET_ACCESS_KEY` | AWS IAM secret |
+| `BACKUP_AWS_REGION` | AWS region, e.g. `ap-southeast-2` |
+
+### Restoring the database
+
+```bash
+# Download the dump
+aws s3 cp s3://your-bucket/db/photos-YYYY-MM-DD.dump ./restore.dump
+
+# Restore into a target database
+pg_restore --clean --no-owner --no-privileges \
+  -d "postgresql://USER:PASSWORD@host/dbname?sslmode=require" \
+  ./restore.dump
+```
+
+### Restoring blobs
+
+Blobs are stored in S3 under `blobs/` with the same pathname as in Vercel. Re-upload them to Vercel Blob using `@vercel/blob`'s `put()` with `addRandomSuffix: false` and the original pathname.
+
+---
+
 ## Testing
 
 ```bash

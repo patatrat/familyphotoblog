@@ -250,10 +250,10 @@ Priority scale:
 | IN8 | ✓ Playwright E2E tests for critical flows, run against staging | P2 | |
 | IN12 | ✓ Move Next.js app from family-photos/ subfolder to repo root | P1 | Update Vercel root directory (prod + staging) and GitHub Actions workflow path |
 | IN13 | ✓ `prisma migrate deploy` runs automatically on every Vercel build | P1 | Added to npm build script |
-| IN9 | Scheduled DB backup to AWS S3 (Glacier or Standard-IA) | P3 | |
-| IN10 | Scheduled Vercel Blob export/backup | P3 | |
+| IN9 | ✓ Scheduled DB backup to AWS S3 (Standard-IA) | P3 | pg_dump --format=custom → S3; daily via GitHub Actions |
+| IN10 | ✓ Scheduled Vercel Blob export/backup | P3 | Incremental sync to S3; scripts/backup-blobs.mjs |
 | IN11 | Open-source portability — storage, email, auth configurable via env vars | P4 | |
-| IN12 | Restore from backup | P3 | |
+| IN12 | Restore from backup | P3 | Documented in README; pg_restore for DB, re-put for blobs |
 
 ---
 
@@ -378,7 +378,7 @@ model EventTag {
 
 ## Current Status
 
-All P1, P2, and P3 features complete except IN9/IN10 (backups) and E14 (photo reorder). Site is live. Only P4 features and the two remaining P3 items remain.
+All P1, P2, and P3 features complete except E14 (photo reorder) and UI7 (UX review). Site is live.
 
 ### Infrastructure notes
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
@@ -394,12 +394,12 @@ All P1, P2, and P3 features complete except IN9/IN10 (backups) and E14 (photo re
 - `postcss` in `next` internals — bundled; not exposed to user-controlled CSS.
 
 ### Remaining work
-- IN9/IN10 — Scheduled DB and Blob backups (P3)
 - E14 — Drag-and-drop photo reorder (P3)
 - UI7 — UI/UX review with specialised agent skill (P3)
 - P4 features (see backlog tables above)
 
 ### Recently completed
+- IN9/IN10 ✓ — Daily DB backup (pg_dump → S3 STANDARD_IA) + incremental blob sync (Vercel → S3); `.github/workflows/backup.yml`; requires 6 GitHub Actions secrets (see README)
 - Branch cleanup ✓ — Deleted 4 stale merged branches; added vercel-ignored-build-step.sh
 - Security ✓ — 5 vulnerabilities resolved: blob proxy approval check; upload error message leakage; Auth.js magic-link rate-limit bypass via `POST /api/auth/signin/nodemailer`; photo removal action event-status guard; conflicting CSP headers between proxy.ts and next.config.ts
 - E13 ✓ — Bulk photo upload: concurrent (3 workers), progress counter, cancel button, duplicate detection (SHA-256)
