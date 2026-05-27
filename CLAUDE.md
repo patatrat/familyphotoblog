@@ -378,7 +378,7 @@ model EventTag {
 
 ## Current Status
 
-All P1 and P2 features complete. All remaining P3 features complete except IN9/IN10 (backups) and E14 (photo reorder). Site is live.
+All P1, P2, and P3 features complete except IN9/IN10 (backups) and E14 (photo reorder). Site is live. Only P4 features and the two remaining P3 items remain.
 
 ### Infrastructure notes
 - `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
@@ -386,13 +386,21 @@ All P1 and P2 features complete. All remaining P3 features complete except IN9/I
 - Dark mode: class-based via ThemeProvider + localStorage, anti-flash inline script, defaults to system preference
 - E2E tests run against staging (`https://photos-staging.radomski.co.nz`) and are opt-in: include `[e2e]` in the commit message to trigger them. Requires `E2E_DATABASE_URL` GitHub Actions secret (staging Neon direct URL).
 - Dependabot configured: monthly grouped npm + GitHub Actions updates; major version bumps ignored for nodemailer, typescript, eslint, @types/node.
+- `scripts/vercel-ignored-build-step.sh` skips Vercel preview builds for dependabot PRs (set as "Ignored Build Step" in Vercel project settings).
+
+### Known npm audit vulnerabilities (not directly exploitable)
+- `nodemailer ^7` — SMTP injection CVEs (GHSA-c7w3-x93f-qmm8, GHSA-vvjj-xcjg-gr5g). Neither vector is user-controlled. Blocked by `@auth/core` peer dep `^7.0.7`; cannot upgrade until upstream changes.
+- `@hono/node-server` in `@prisma/dev` — dev/build-time only (Prisma Studio). Not in production.
+- `postcss` in `next` internals — bundled; not exposed to user-controlled CSS.
 
 ### Remaining work
 - IN9/IN10 — Scheduled DB and Blob backups (P3)
 - E14 — Drag-and-drop photo reorder (P3)
+- UI7 — UI/UX review with specialised agent skill (P3)
 - P4 features (see backlog tables above)
 
 ### Recently completed
+- Branch cleanup ✓ — Deleted 4 stale merged branches; added vercel-ignored-build-step.sh
 - Security ✓ — 5 vulnerabilities resolved: blob proxy approval check; upload error message leakage; Auth.js magic-link rate-limit bypass via `POST /api/auth/signin/nodemailer`; photo removal action event-status guard; conflicting CSP headers between proxy.ts and next.config.ts
 - E13 ✓ — Bulk photo upload: concurrent (3 workers), progress counter, cancel button, duplicate detection (SHA-256)
 - E18 ✓ — Unpublish + delete event (admin only); delete cascades all photos and blobs

@@ -26,15 +26,21 @@ A private, invite-only photo blog for the Radomski family. Built around "events"
 ## Features
 
 - **Magic link auth** — sign up with name, email, and a family passphrase; log in with email only
-- **Admin approval** — new signups require admin approval before they can view anything
-- **Events** — create, draft, tag, and publish photo albums
-- **Photos** — upload with automatic EXIF stripping, thumbnail generation, and sort by time taken
-- **Lightbox** — full photo viewer with keyboard and swipe navigation
-- **Comments & reactions** — per-photo comments and 6 emoji reactions, optimistic UI
+- **Admin approval** — new signups require admin approval before they can view anything; toggle on/off
+- **Events** — create, draft, tag, publish, unpublish, and delete photo albums; user-submitted events require approval
+- **Bulk photo upload** — concurrent (3 workers), progress counter, cancel button, duplicate detection (SHA-256)
+- **HEIC support** — iOS HEIC photos converted server-side before processing
+- **Photos** — automatic EXIF stripping, thumbnail generation, sorted by time taken; user-submitted photos require approval
+- **Lightbox** — full photo viewer with keyboard/swipe navigation, uploader attribution
+- **Comments & reactions** — per-photo comments and 6 emoji reactions with hover tooltips showing who reacted
 - **Photo reporting** — any member can flag a photo; admin reviews and deletes or restores
-- **Tag filtering** — events can be tagged and filtered on the home page
-- **Admin panel** — user management, site settings, removal request queue
+- **Tag filtering** — events tagged and filterable on the home page
+- **Archive page** — all events grouped by year
+- **Dark mode** — matches radomski.co.nz; localStorage persistence, anti-flash inline script
+- **Email notifications** — new event published emails; per-user opt-out in /account
+- **Admin panel** — user management, site settings, removal queue, event/photo approval queues
 - **Security headers** — CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- **Auth-gated blob proxy** — photo URLs never exposed; session + approval checked on every request
 
 ---
 
@@ -92,6 +98,8 @@ See [`.env.example`](.env.example) for all required variables with descriptions.
 ├── prisma/
 │   ├── schema.prisma          # Data model
 │   └── migrations/            # Migration history
+├── scripts/
+│   └── vercel-ignored-build-step.sh  # Skips Vercel builds for dependabot PRs
 ├── src/
 │   ├── app/
 │   │   ├── actions/           # Server actions (events, photos, auth, admin)
@@ -115,13 +123,19 @@ Two Vercel projects mirror two branches:
 | `staging` | family-photos-staging | photos-staging.radomski.co.nz |
 | `main` | family-photos | photos.radomski.co.nz |
 
-**Workflow:** develop on `staging` branch → push → test on staging URL → merge to `main` → production deploys automatically.
+**Workflow:** develop on feature branch → PR to `staging` → test on staging URL → merge to `main` → production deploys automatically.
+
+`prisma migrate deploy` runs automatically as part of `npm run build` on every Vercel deploy.
 
 After deploying to a new environment, run the seed script to create the initial admin user:
 
 ```bash
 npx prisma db seed
 ```
+
+### Vercel Ignored Build Step
+
+Set `scripts/vercel-ignored-build-step.sh` as the "Ignored Build Step" command in Vercel project settings to skip builds triggered by Dependabot PRs (they lack env vars and must not run migrations).
 
 ---
 
@@ -137,3 +151,19 @@ npm run lint
 # Unit tests
 npm run test
 ```
+
+### E2E Tests (Playwright)
+
+E2E tests run against the staging deployment. Include `[e2e]` in your commit message to trigger them in CI. Requires `E2E_DATABASE_URL` GitHub Actions secret (staging Neon direct URL).
+
+---
+
+## Known Vulnerabilities
+
+The following `npm audit` findings are present but not directly exploitable in this application:
+
+| Package | CVE | Severity | Notes |
+|---------|-----|----------|-------|
+| `nodemailer ^7` | GHSA-c7w3-x93f-qmm8, GHSA-vvjj-xcjg-gr5g | Moderate | SMTP injection via `envelope.size` / transport name CRLF. Neither vector is user-controlled in this app. Blocked on `@auth/core` peer dep `^7.0.7`; fix requires upstream change. |
+| `@hono/node-server` (in `@prisma/dev`) | GHSA-92pp-h63x-v22m | Moderate | Dev/build-time only — Prisma Studio. Not in production runtime. |
+| `postcss` (in `next` internal) | GHSA-qx2v-qp2m-jg93 | Moderate | Bundled inside Next.js; not exposed to user-controlled CSS input. |
