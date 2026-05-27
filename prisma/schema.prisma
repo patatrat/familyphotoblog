@@ -33,6 +33,12 @@ enum RemovalStatus {
   RESTORED
 }
 
+enum NotificationType {
+  NEW_EVENT
+  MENTION
+  REACTION
+}
+
 // ─── Auth.js required models ─────────────────────────────────────────────────
 
 model Account {
@@ -83,27 +89,30 @@ model User {
   emailNewEvents Boolean    @default(true)
   emailMentions  Boolean    @default(true)
   createdAt      DateTime   @default(now())
-  accounts       Account[]
-  sessions       Session[]
-  events         Event[]
-  photos         Photo[]
-  comments       Comment[]
-  reactions      Reaction[]
+  accounts          Account[]
+  sessions          Session[]
+  events            Event[]
+  photos            Photo[]
+  comments          Comment[]
+  reactions         Reaction[]
+  notifications     Notification[] @relation("notif_recipient")
+  sentNotifications Notification[] @relation("notif_actor")
 }
 
 model Event {
-  id              String      @id @default(cuid())
+  id              String         @id @default(cuid())
   title           String
   date            DateTime
   description     String?
-  status          EventStatus @default(DRAFT)
+  status          EventStatus    @default(DRAFT)
   featuredPhotoId String?
   createdBy       String
-  creator         User        @relation(fields: [createdBy], references: [id])
+  creator         User           @relation(fields: [createdBy], references: [id])
   photos          Photo[]
   tags            EventTag[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  notifications   Notification[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model Photo {
@@ -123,6 +132,7 @@ model Photo {
   comments       Comment[]
   reactions      Reaction[]
   removalRequest RemovalRequest?
+  notifications  Notification[]
   createdAt      DateTime        @default(now())
 
   @@unique([eventId, hash])
@@ -140,13 +150,33 @@ model RemovalRequest {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  photoId   String
-  photo     Photo    @relation(fields: [photoId], references: [id])
+  id            String         @id @default(cuid())
+  photoId       String
+  photo         Photo          @relation(fields: [photoId], references: [id])
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  content       String
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+}
+
+model Notification {
+  id        String           @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  content   String
-  createdAt DateTime @default(now())
+  user      User             @relation("notif_recipient", fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  read      Boolean          @default(false)
+  actorId   String?
+  actor     User?            @relation("notif_actor", fields: [actorId], references: [id], onDelete: SetNull)
+  eventId   String?
+  event     Event?           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  photoId   String?
+  photo     Photo?           @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  commentId String?
+  comment   Comment?         @relation(fields: [commentId], references: [id], onDelete: SetNull)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read, createdAt(sort: Desc)])
 }
 
 model Reaction {

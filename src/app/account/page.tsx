@@ -11,7 +11,7 @@ export default async function AccountPage() {
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true, emailNewEvents: true },
+    select: { name: true, email: true, emailNewEvents: true, emailMentions: true },
   })
 
   if (!user) return null
@@ -55,6 +55,26 @@ export default async function AccountPage() {
               </label>
               <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
                 <input type="radio" name="emailNewEvents" value="false" defaultChecked={!user.emailNewEvents} />
+                Off
+              </label>
+            </div>
+          </div>
+          <div className="px-6 py-5 flex items-start justify-between gap-6">
+            <div>
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                Mention emails
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Get an email when someone @mentions you in a comment.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                <input type="radio" name="emailMentions" value="true" defaultChecked={user.emailMentions} />
+                On
+              </label>
+              <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 cursor-pointer">
+                <input type="radio" name="emailMentions" value="false" defaultChecked={!user.emailMentions} />
                 Off
               </label>
             </div>

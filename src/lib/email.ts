@@ -73,6 +73,53 @@ export async function sendNewEventEmails(
   }
 }
 
+export async function sendMentionEmail(
+  recipient: { email: string; name: string },
+  actor: { name: string },
+  context: { photoId: string; eventId: string; eventTitle: string; commentPreview: string }
+): Promise<void> {
+  const photoUrl = `${APP_URL}/events/${context.eventId}#photo-${context.photoId}`
+  try {
+    await transport.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: recipient.email,
+      subject: `${actor.name} mentioned you in a comment`,
+      text: [
+        `Hi ${recipient.name},`,
+        ``,
+        `${actor.name} mentioned you in a comment on "${context.eventTitle}":`,
+        ``,
+        `"${context.commentPreview}"`,
+        ``,
+        `View it here: ${photoUrl}`,
+        ``,
+        `To turn off mention emails, visit: ${APP_URL}/account`,
+      ].join("\n"),
+      html: `
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; color: #18181b; max-width: 480px; margin: 0 auto; padding: 24px;">
+  <p style="font-size: 15px;"><strong>${escHtml(actor.name)}</strong> mentioned you in a comment on <strong>${escHtml(context.eventTitle)}</strong>:</p>
+  <blockquote style="border-left: 3px solid #e4e4e7; margin: 16px 0; padding: 8px 16px; color: #52525b; font-size: 14px;">
+    ${escHtml(context.commentPreview)}
+  </blockquote>
+  <p style="margin-top: 24px;">
+    <a href="${photoUrl}" style="background: #18181b; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+      View comment →
+    </a>
+  </p>
+  <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 32px 0;" />
+  <p style="font-size: 12px; color: #a1a1aa;">
+    <a href="${APP_URL}/account" style="color: #71717a;">Turn off mention emails</a>
+  </p>
+</body>
+</html>`,
+    })
+  } catch (err) {
+    console.error("[email] Failed to send mention notification:", err)
+  }
+}
+
 function escHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")

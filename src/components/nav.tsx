@@ -1,12 +1,14 @@
 import { logoutAction } from "@/app/actions/auth"
 import { getSettings } from "@/lib/settings"
+import { getUnreadCountAction } from "@/app/actions/notifications"
 import type { AuthSession } from "@/lib/session"
 import { ThemeToggle } from "./theme-toggle"
+import { NotificationBell } from "./notification-bell"
 import Link from "next/link"
 
 export async function Nav({ session }: { session: AuthSession }) {
   const isAdmin = session.user.role === "ADMIN"
-  const settings = await getSettings()
+  const [settings, unreadCount] = await Promise.all([getSettings(), getUnreadCountAction()])
   const canCreateEvent = isAdmin || settings.userEventsEnabled
 
   return (
@@ -47,6 +49,7 @@ export async function Nav({ session }: { session: AuthSession }) {
           >
             Account
           </Link>
+          <NotificationBell initialUnread={unreadCount} />
           <ThemeToggle />
           <form action={logoutAction}>
             <button

@@ -9,6 +9,11 @@ import {
   toggleReactionAction,
 } from "@/app/actions/interactions"
 
+type UserSummary = {
+  id: string
+  name: string
+}
+
 type Comment = {
   id: string
   content: string
@@ -38,10 +43,12 @@ export function PhotoGrid({
   photos: initial,
   currentUserId,
   isAdmin,
+  users,
 }: {
   photos: Photo[]
   currentUserId: string
   isAdmin: boolean
+  users: UserSummary[]
 }) {
   const [photos, setPhotos] = useState(initial)
   const [index, setIndex] = useState<number | null>(null)
@@ -145,6 +152,7 @@ export function PhotoGrid({
           total={photos.length}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
+          users={users}
           onClose={close}
           onPrev={prev}
           onNext={next}
@@ -169,6 +177,7 @@ function Lightbox({
   total,
   currentUserId,
   isAdmin,
+  users,
   onClose,
   onPrev,
   onNext,
@@ -179,6 +188,7 @@ function Lightbox({
   total: number
   currentUserId: string
   isAdmin: boolean
+  users: UserSummary[]
   onClose: () => void
   onPrev: () => void
   onNext: () => void
@@ -275,6 +285,7 @@ function Lightbox({
           photo={photo}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
+          users={users}
         />
       </div>
     </div>
@@ -285,17 +296,53 @@ function InteractionPanel({
   photo,
   currentUserId,
   isAdmin,
+  users,
 }: {
   photo: Photo
   currentUserId: string
   isAdmin: boolean
+  users: UserSummary[]
 }) {
   const [comments, setComments] = useState(photo.comments)
   const [reactions, setReactions] = useState(photo.reactions)
   const [commentText, setCommentText] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [commentError, setCommentError] = useState<string | null>(null)
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionStart, setMentionStart] = useState(-1)
   const commentsEndRef = useRef<HTMLDivElement>(null)
+  const commentInputRef = useRef<HTMLInputElement>(null)
+
+  const filteredMentions = mentionQuery !== null
+    ? users.filter((u) => u.name.toLowerCase().includes(mentionQuery.toLowerCase())).slice(0, 6)
+    : []
+
+  function handleCommentInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    const cursor = e.target.selectionStart ?? val.length
+    setCommentText(val)
+    const textBeforeCursor = val.slice(0, cursor)
+    const atIdx = textBeforeCursor.lastIndexOf("@")
+    if (atIdx !== -1) {
+      const query = textBeforeCursor.slice(atIdx + 1)
+      if (!query.includes(" ") && query.length <= 50) {
+        setMentionQuery(query)
+        setMentionStart(atIdx)
+        return
+      }
+    }
+    setMentionQuery(null)
+    setMentionStart(-1)
+  }
+
+  function handleSelectMention(user: UserSummary) {
+    const before = commentText.slice(0, mentionStart)
+    const after = commentText.slice(mentionStart + 1 + (mentionQuery?.length ?? 0))
+    setCommentText(before + `@[${user.name}](${user.id}) ` + after)
+    setMentionQuery(null)
+    setMentionStart(-1)
+    setTimeout(() => commentInputRef.current?.focus(), 0)
+  }
 
   const handleReaction = async (emoji: string) => {
     const current = reactions.find((r) => r.emoji === emoji)
@@ -404,7 +451,7 @@ function InteractionPanel({
                 </span>
               </div>
               <p className="text-sm text-zinc-700 dark:text-zinc-300 break-words leading-snug mt-0.5">
-                {comment.content}
+                {renderMentions(comment.content)}
               </p>
             </div>
             {isAdmin && !comment.id.startsWith("temp-") && (
@@ -428,11 +475,26 @@ function InteractionPanel({
         {commentError && (
           <p className="text-xs text-red-500 mb-2">{commentError}</p>
         )}
-        <div className="flex gap-2">
+        <div className="relative flex gap-2">
+          {filteredMentions.length > 0 && (
+            <div className="absolute bottom-full left-0 right-12 mb-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden z-10">
+              {filteredMentions.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); handleSelectMention(u) }}
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  @{u.name}
+                </button>
+              ))}
+            </div>
+          )}
           <input
+            ref={commentInputRef}
             type="text"
             value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
+            onChange={handleCommentInput}
             placeholder="Add a comment…"
             maxLength={1000}
             className="flex-1 min-w-0 px-3 py-2 rounded-lg text-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500"
@@ -448,6 +510,21 @@ function InteractionPanel({
       </form>
     </div>
   )
+}
+
+function renderMentions(content: string) {
+  const parts = content.split(/(@\[[^\]]+\]\([^)]+\))/g)
+  return parts.map((part, i) => {
+    const match = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/)
+    if (match) {
+      return (
+        <span key={i} className="text-blue-600 dark:text-blue-400 font-medium">
+          @{match[1]}
+        </span>
+      )
+    }
+    return part
+  })
 }
 
 function formatRelativeTime(iso: string): string {

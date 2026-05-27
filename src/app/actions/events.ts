@@ -93,6 +93,25 @@ export async function publishEventAction(eventId: string): Promise<void> {
   revalidatePath(`/events/${eventId}`)
   revalidatePath(`/events/${eventId}/edit`)
 
+  // Create in-app NEW_EVENT notifications for all approved non-creator users
+  void db.user
+    .findMany({
+      where: { approved: true, NOT: { id: session.user.id } },
+      select: { id: true },
+    })
+    .then((users) =>
+      db.notification.createMany({
+        data: users.map((u) => ({
+          userId: u.id,
+          type: "NEW_EVENT" as const,
+          actorId: session.user.id,
+          eventId,
+        })),
+        skipDuplicates: true,
+      })
+    )
+    .catch((err) => console.error("[publishEvent] notification creation failed:", err))
+
   // Fire-and-forget — email is non-critical and can be slow; don't block the response
   void getSettings()
     .then((settings) => {

@@ -19,24 +19,31 @@ export default async function EventPage({
   const isAdmin = session.user.role === "ADMIN"
   const settings = await getSettings()
 
-  const event = await db.event.findUnique({
-    where: { id },
-    include: {
-      photos: {
-        where: { status: "VISIBLE" },
-        orderBy: { sortOrder: "asc" },
-        include: {
-          uploader: { select: { name: true } },
-          comments: {
-            orderBy: { createdAt: "asc" },
-            include: { user: { select: { id: true, name: true } } },
+  const [event, approvedUsers] = await Promise.all([
+    db.event.findUnique({
+      where: { id },
+      include: {
+        photos: {
+          where: { status: "VISIBLE" },
+          orderBy: { sortOrder: "asc" },
+          include: {
+            uploader: { select: { name: true } },
+            comments: {
+              orderBy: { createdAt: "asc" },
+              include: { user: { select: { id: true, name: true } } },
+            },
+            reactions: { select: { emoji: true, userId: true, user: { select: { name: true } } } },
           },
-          reactions: { select: { emoji: true, userId: true, user: { select: { name: true } } } },
         },
+        creator: { select: { name: true } },
       },
-      creator: { select: { name: true } },
-    },
-  })
+    }),
+    db.user.findMany({
+      where: { approved: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ])
 
   if (!event) notFound()
   if (event.status !== "PUBLISHED" && !isAdmin) notFound()
@@ -130,6 +137,7 @@ export default async function EventPage({
             photos={photos}
             currentUserId={session.user.id}
             isAdmin={isAdmin}
+            users={approvedUsers}
           />
         )}
 
