@@ -35,8 +35,9 @@ export async function GET(req: NextRequest) {
   return new NextResponse(result.stream as ReadableStream, {
     headers: {
       "Content-Type": result.blob.contentType || "image/jpeg",
-      // Browsers cache privately — avoids round-trips while enforcing auth
-      "Cache-Control": "private, max-age=86400",
+      // Blob URLs are immutable — each upload gets a unique URL that never changes.
+      // 1-year immutable cache eliminates repeat fetches for returning visitors.
+      "Cache-Control": "private, max-age=31536000, immutable",
     },
   })
 }

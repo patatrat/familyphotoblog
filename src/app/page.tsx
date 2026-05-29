@@ -185,6 +185,7 @@ function EventGrid({
                   )?.thumbnailUrl ?? event.photos[0].thumbnailUrl
                 )}
                 alt={event.title}
+                loading="lazy"
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (

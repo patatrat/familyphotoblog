@@ -111,6 +111,7 @@ export function PhotoGrid({
                 <img
                   src={blobProxy(photo.thumbnailUrl)}
                   alt={photo.caption ?? `Photo ${i + 1}`}
+                  loading={i < 8 ? "eager" : "lazy"}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
               </button>

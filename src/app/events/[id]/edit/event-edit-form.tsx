@@ -401,6 +401,7 @@ export function EventEditForm({ event }: { event: EventData }) {
                         <img
                           src={blobProxy(photo.thumbnailUrl)}
                           alt={photo.caption ?? "Photo"}
+                          loading="lazy"
                           className="w-full h-full object-cover pointer-events-none"
                           draggable={false}
                         />

@@ -96,15 +96,16 @@ export async function POST(
     const baseName = `${eventId}/${Date.now()}-${Math.random().toString(36).slice(2)}`
 
     // Sharp strips EXIF by default; .rotate() applies EXIF orientation before stripping
+    // WebP saves ~30% over JPEG at equivalent quality. Quality 80/82 is visually lossless at these sizes.
     // Original is not stored — this is a sharing site, not a backup service
     const [thumbBuf, midBuf] = await Promise.all([
-      sharp(processBuffer).rotate().resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
-      sharp(processBuffer).rotate().resize({ width: 1200, withoutEnlargement: true }).jpeg({ quality: 88 }).toBuffer(),
+      sharp(processBuffer).rotate().resize({ width: 400, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer(),
+      sharp(processBuffer).rotate().resize({ width: 1200, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer(),
     ])
 
     const [thumb, mid] = await Promise.all([
-      put(`photos/${baseName}-thumb.jpg`, thumbBuf, { access: "private", contentType: "image/jpeg" }),
-      put(`photos/${baseName}-mid.jpg`, midBuf, { access: "private", contentType: "image/jpeg" }),
+      put(`photos/${baseName}-thumb.webp`, thumbBuf, { access: "private", contentType: "image/webp" }),
+      put(`photos/${baseName}-mid.webp`, midBuf, { access: "private", contentType: "image/webp" }),
     ])
 
     // sortOrder is Int — store Unix seconds (not ms) to stay within 32-bit range
