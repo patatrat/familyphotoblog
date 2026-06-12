@@ -8,8 +8,7 @@ import { TagSuggestion } from "./tag-suggestion"
 import { UserPhotoUpload } from "@/components/user-photo-upload"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-
-const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🙌"]
+import { EMOJIS } from "@/lib/emojis"
 
 export default async function EventPage({
   params,

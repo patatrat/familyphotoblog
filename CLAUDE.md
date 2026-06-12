@@ -17,7 +17,7 @@ A private, family-focused photo blog. Users must be authenticated to see anythin
 ```
 Browser → Cloudflare DNS/CDN → Vercel (Next.js App Router)
                                     ├── Neon Postgres     (users, events, photos, comments, reactions, tags)
-                                    ├── Vercel Blob       (original photos + thumbnails + mid-size versions)
+                                    ├── Vercel Blob       (thumbnail + mid-size WebP versions; originals NOT stored)
                                     └── Forward Email     (magic links, notifications)
 ```
 
@@ -26,12 +26,13 @@ Browser → Cloudflare DNS/CDN → Vercel (Next.js App Router)
 **Database:** Neon (Postgres) with Prisma ORM for type-safe access and migrations in version control.
 
 **Photo processing:** Server-side on upload using `sharp`.
-- Upload hits a Next.js API route
-- sharp strips EXIF data (privacy — GPS coordinates in phone photos)
-- sharp generates: thumbnail (400px wide) + mid-size (1200px wide)
-- All three versions stored in Vercel Blob; all three URLs saved to DB
-- Original stored but never served directly to browsers
-- Rationale: instant page loads, controlled dimensions, cheaper than on-demand optimisation, EXIF strip in same pipeline
+- Upload hits a Next.js API route (`/api/events/[id]/upload`)
+- EXIF date (`DateTimeOriginal`/`CreateDate`) extracted via `exifr` for sorting, then sharp strips all EXIF (privacy — GPS coordinates in phone photos); `.rotate()` applies orientation before stripping
+- HEIC/HEIF converted to JPEG first via `heic-convert` (Vercel's sharp lacks the HEVC codec)
+- sharp generates WebP: thumbnail (400px wide, q=80) + mid-size (1200px wide, q=82)
+- **Originals are NOT stored** — this is a sharing site, not a backup service (`Photo.blobUrl` is a legacy nullable column)
+- SHA-256 hash of original bytes stored for per-event duplicate detection
+- Rationale: instant page loads, controlled dimensions, cheaper than on-demand optimisation, EXIF strip in same pipeline; WebP saves ~30% bandwidth over JPEG
 
 **Staging:** Separate Vercel project at `photos-staging.radomski.co.nz` tied to the `staging` branch.
 - Rationale: stable URL required for magic link email flows and reliable Playwright E2E tests
@@ -51,14 +52,20 @@ Browser → Cloudflare DNS/CDN → Vercel (Next.js App Router)
 ## Environment Variables
 
 ```
-DATABASE_URL                  # Neon Postgres connection string
+DATABASE_URL                  # Neon Postgres pooled connection string (app runtime)
+DATABASE_DIRECT_URL           # Neon direct (non-pooler) URL — Prisma migrations only
 BLOB_READ_WRITE_TOKEN         # Vercel Blob token
 AUTH_SECRET                   # NextAuth secret (generate: openssl rand -base64 32)
 AUTH_TRUST_HOST               # true (required on Vercel)
-EMAIL_SERVER                  # Forward Email SMTP connection string
-EMAIL_FROM                    # no-reply@photos.radomski.co.nz
+SMTP_HOST                     # Forward Email SMTP host (smtp.forwardemail.net)
+SMTP_PORT                     # 587
+SMTP_USER                     # SMTP username
+SMTP_PASS                     # SMTP password
+EMAIL_FROM                    # noreply@radomski.co.nz
 NEXT_PUBLIC_APP_URL           # https://photos.radomski.co.nz
 SIGNUP_PASSPHRASE             # Family passphrase required on signup
+ADMIN_EMAIL                   # Admin user seeded via npm run seed
+ADMIN_NAME                    # Admin user display name
 ```
 
 All vars must be documented in `.env.example` with placeholder values and comments. Never commit real values.
@@ -135,7 +142,7 @@ Priority scale:
 | PH8 | ✓ Display who took the photo (uploader attribution) | P3 | Shown in lightbox |
 | PH9 | ✓ Users upload photos to existing events (pending approval) | P3 | |
 | PH10 | ✓ New user-submitted photos require approval before visible | P3 | |
-| PH11 | Download original photo (full-res, requires auth) | P3 | |
+| PH11 | Download photo (requires auth) | P3 | Originals no longer stored — mid-size (1200px WebP) is the largest version available |
 | PH12 | ✓ Add caption to photo on upload / edit | P3 | Inline per-photo caption input in admin edit form; blur-to-save |
 | PH13 | ✓ Duplicate photo detection | P3 | SHA-256 hash per event; skipped count shown in UI |
 | PH14 | Simple photo manipulation — rotate, crop, flip | P4 | |
@@ -218,6 +225,9 @@ Priority scale:
 | SE7 | ✓ Auth.js magic-link guard — sendVerificationRequest checks user exists | P1 | Prevents email spam via POST /api/auth/signin/nodemailer |
 | SE8 | ✓ Generic error responses from upload route | P1 | Prevents Prisma/Blob schema leakage via error messages |
 | SE9 | ✓ Photo removal action validates event is PUBLISHED | P1 | Prevents hiding photos from draft events or re-hiding after restore |
+| SE10 | ✓ Signup rate-limited before passphrase check; constant-time compare | P1 | Failed passphrase guesses count against the rate limit (brute-force protection) |
+| SE11 | ✓ Comments/reactions validate photo+event status; emoji allowlist; mention IDs verified | P2 | Non-admins can only interact with VISIBLE photos on PUBLISHED events |
+| SE12 | ✓ CSP drops 'unsafe-eval' in production | P2 | Only emitted in development (Next.js fast-refresh needs it) |
 
 ---
 
@@ -260,20 +270,28 @@ Priority scale:
 ## Data Model (Prisma schema)
 
 ```prisma
+// Auth.js models (Account, Session, VerificationToken) also exist — see prisma/schema.prisma
+
 model User {
   id              String     @id @default(cuid())
   name            String
   email           String     @unique
+  emailVerified   DateTime?
+  image           String?
   role            Role       @default(USER)
   approved        Boolean    @default(false)
-  canComment      Boolean    @default(true)
+  canComment      Boolean    @default(true)  // NOTE: not yet enforced anywhere (A14 pending)
   emailNewEvents  Boolean    @default(true)
   emailMentions   Boolean    @default(true)
   createdAt       DateTime   @default(now())
+  accounts        Account[]
+  sessions        Session[]
   events          Event[]
   photos          Photo[]
   comments        Comment[]
   reactions       Reaction[]
+  notifications     Notification[] @relation("notif_recipient")
+  sentNotifications Notification[] @relation("notif_actor")
 }
 
 enum Role { USER MODERATOR ADMIN }
@@ -301,17 +319,21 @@ model Photo {
   event          Event       @relation(fields: [eventId], references: [id])
   uploadedBy     String
   uploader       User        @relation(fields: [uploadedBy], references: [id])
-  blobUrl        String
+  blobUrl        String?     // legacy — originals are no longer stored
   thumbnailUrl   String
   midSizeUrl     String
   caption        String?
   takenAt        DateTime?
   sortOrder      Int         @default(0)
   status         PhotoStatus @default(VISIBLE)
+  hash           String?     // SHA-256 of original bytes, for duplicate detection
   comments       Comment[]
   reactions      Reaction[]
   removalRequest RemovalRequest?
+  notifications  Notification[]
   createdAt      DateTime    @default(now())
+  @@unique([eventId, hash])
+  @@index([eventId, status])
 }
 
 enum PhotoStatus { PENDING VISIBLE HIDDEN }
@@ -363,6 +385,41 @@ model EventTag {
   tag     Tag    @relation(fields: [tagId], references: [id])
   @@id([eventId, tagId])
 }
+
+enum NotificationType { NEW_EVENT MENTION REACTION }
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation("notif_recipient", fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  read      Boolean          @default(false)
+  actorId   String?
+  actor     User?            @relation("notif_actor", fields: [actorId], references: [id], onDelete: SetNull)
+  eventId   String?
+  photoId   String?
+  commentId String?
+  createdAt DateTime         @default(now())
+  @@index([userId, read, createdAt(sort: Desc)])
+}
+
+// Rate-limiting ledger for magic link requests (identifier = email or IP)
+model MagicLinkRequest {
+  id         String   @id @default(cuid())
+  identifier String
+  createdAt  DateTime @default(now())
+  @@index([identifier, createdAt])
+}
+
+// Single-row site-wide settings (id = "global")
+model SiteSettings {
+  id                  String  @id @default("global")
+  signupsEnabled      Boolean @default(true)
+  approvalRequired    Boolean @default(true)
+  userEventsEnabled   Boolean @default(false)
+  userPhotosEnabled   Boolean @default(false)
+  eventEmailsEnabled  Boolean @default(true)
+}
 ```
 
 ---
@@ -398,6 +455,8 @@ All P1, P2, and P3 features complete. Several P4 features also done. Site is liv
 - P4 features (see backlog tables above)
 
 ### Recently completed
+- Security review pass ✓ — SE10/SE11/SE12 (see Security table); `deleteUserAction` no longer FK-errors on users with content (blocks with admin banner, cleans up comments/reactions otherwise); caption/reason/name length caps; reaction emoji list shared via `src/lib/emojis.ts`
+- Bandwidth/perf ✓ — All photos now WebP (thumb q=80, mid q=82); originals no longer stored; immutable 1-year cache on blob proxy responses; lazy loading; one-shot migration script (`scripts/convert-to-webp.mjs`) re-encoded existing JPEG/PNG photos
 - PH12/E17/E15/CR9 ✓ — Photo captions (inline per-photo input in edit form, blur-to-save); creators can view/edit PENDING events (inline form with amber notice); any user can add tags to PUBLISHED events; profanity filter on comments (blocklist regex, returns error)
 - CR6/CR7/CR8/CR12 ✓ — @mentions in comments (autocomplete, @[Name](userId) storage, highlighted render); MENTION + REACTION + NEW_EVENT in-app notifications (bell icon in nav with unread badge + dropdown); mention emails; emailMentions opt-out in /account
 - E14 ✓ — Drag-and-drop photo reorder in event edit page

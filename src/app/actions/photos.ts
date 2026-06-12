@@ -11,6 +11,7 @@ export async function updatePhotoCaptionAction(
 ): Promise<{ error?: string }> {
   await requireAdmin()
   const trimmed = caption.trim()
+  if (trimmed.length > 500) return { error: "Caption too long (max 500 characters)." }
   const photo = await db.photo.findUnique({ where: { id: photoId }, select: { eventId: true } })
   if (!photo) return { error: "Photo not found." }
   await db.photo.update({ where: { id: photoId }, data: { caption: trimmed || null } })
@@ -24,6 +25,8 @@ export async function requestRemovalAction(
   reason: string
 ): Promise<{ error?: string }> {
   const session = await requireApproved()
+
+  if (reason.length > 500) return { error: "Reason too long (max 500 characters)." }
 
   const photo = await db.photo.findUnique({
     where: { id: photoId },

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { requireApproved, requireAdmin } from "@/lib/session"
 import { sendMentionEmail } from "@/lib/email"
+import { EMOJIS } from "@/lib/emojis"
 
 // Basic profanity blocklist — intentionally short to avoid false positives on a family blog
 const PROFANITY_RE = /\b(fuck|shit|cunt|cock|dick|pussy|asshole|motherfucker|faggot|nigger|nigga)\b/i
@@ -32,9 +33,15 @@ export async function addCommentAction(
 
   const photo = await db.photo.findUnique({
     where: { id: photoId },
-    select: { eventId: true, event: { select: { title: true } } },
+    select: { eventId: true, status: true, event: { select: { title: true, status: true } } },
   })
   if (!photo) return { error: "Photo not found." }
+
+  // Non-admins can only interact with visible photos on published events
+  const isAdmin = session.user.role === "ADMIN"
+  if (!isAdmin && (photo.status !== "VISIBLE" || photo.event.status !== "PUBLISHED")) {
+    return { error: "Photo not found." }
+  }
 
   const comment = await db.comment.create({
     data: { photoId, userId: session.user.id, content: trimmed },
@@ -42,10 +49,14 @@ export async function addCommentAction(
 
   const mentions = parseMentions(trimmed)
   if (mentions.length > 0) {
-    // Deduplicate by userId, exclude self-mentions
-    const uniqueMentionedIds = [...new Set(mentions.map((m) => m.userId))].filter(
+    // Deduplicate by userId, exclude self-mentions, and keep only real users —
+    // the markup is client-supplied, so an invalid id would fail the FK insert
+    const candidateIds = [...new Set(mentions.map((m) => m.userId))].filter(
       (id) => id !== session.user.id
     )
+    const uniqueMentionedIds = (
+      await db.user.findMany({ where: { id: { in: candidateIds } }, select: { id: true } })
+    ).map((u) => u.id)
 
     if (uniqueMentionedIds.length > 0) {
       // Create in-app notifications
@@ -114,6 +125,19 @@ export async function toggleReactionAction(
 ): Promise<void> {
   const session = await requireApproved()
 
+  // Only the fixed emoji set is valid — reject arbitrary client-supplied strings
+  if (!(EMOJIS as readonly string[]).includes(emoji)) return
+
+  const photo = await db.photo.findUnique({
+    where: { id: photoId },
+    select: { eventId: true, uploadedBy: true, status: true, event: { select: { status: true } } },
+  })
+  if (!photo) return
+
+  // Non-admins can only interact with visible photos on published events
+  const isAdmin = session.user.role === "ADMIN"
+  if (!isAdmin && (photo.status !== "VISIBLE" || photo.event.status !== "PUBLISHED")) return
+
   const existing = await db.reaction.findUnique({
     where: { photoId_userId_emoji: { photoId, userId: session.user.id, emoji } },
   })
@@ -126,41 +150,29 @@ export async function toggleReactionAction(
     })
 
     // Notify photo uploader (not self)
-    const photo = await db.photo.findUnique({
-      where: { id: photoId },
-      select: { eventId: true, uploadedBy: true },
-    })
-    if (photo) {
-      if (photo.uploadedBy !== session.user.id) {
-        // Deduplicate: only one REACTION notification per actor+photo
-        const alreadyNotified = await db.notification.findFirst({
-          where: {
+    if (photo.uploadedBy !== session.user.id) {
+      // Deduplicate: only one REACTION notification per actor+photo
+      const alreadyNotified = await db.notification.findFirst({
+        where: {
+          userId: photo.uploadedBy,
+          type: "REACTION",
+          actorId: session.user.id,
+          photoId,
+        },
+      })
+      if (!alreadyNotified) {
+        await db.notification.create({
+          data: {
             userId: photo.uploadedBy,
             type: "REACTION",
             actorId: session.user.id,
+            eventId: photo.eventId,
             photoId,
           },
         })
-        if (!alreadyNotified) {
-          await db.notification.create({
-            data: {
-              userId: photo.uploadedBy,
-              type: "REACTION",
-              actorId: session.user.id,
-              eventId: photo.eventId,
-              photoId,
-            },
-          })
-        }
       }
-      revalidatePath(`/events/${photo.eventId}`)
     }
-    return
   }
 
-  const photo = await db.photo.findUnique({
-    where: { id: photoId },
-    select: { eventId: true },
-  })
-  if (photo) revalidatePath(`/events/${photo.eventId}`)
+  revalidatePath(`/events/${photo.eventId}`)
 }
