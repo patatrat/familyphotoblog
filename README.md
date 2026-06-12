@@ -3,7 +3,7 @@
 A private, invite-only photo blog for the Radomski family. Built around "events" (e.g. Christmas 2024) that contain photos, comments, and emoji reactions. Only authenticated, approved family members can see anything.
 
 **Production:** [photos.radomski.co.nz](https://photos.radomski.co.nz)  
-**Staging:** [photos-staging.radomski.co.nz](https://photos-staging.radomski.co.nz)
+**Pre-merge testing:** Vercel preview deployments on every PR
 
 ---
 
@@ -19,7 +19,7 @@ A private, invite-only photo blog for the Radomski family. Built around "events"
 | Image processing | sharp — EXIF strip, thumbnail (400px), mid-size (1200px) |
 | Styling | Tailwind CSS |
 | DNS / CDN | Cloudflare |
-| Hosting | Vercel (prod + staging) |
+| Hosting | Vercel (production + PR previews) |
 
 ---
 
@@ -116,16 +116,15 @@ See [`.env.example`](.env.example) for all required variables with descriptions.
 
 ## Deployment
 
-Two Vercel projects mirror two branches:
+One Vercel project, deployed from `main`:
 
 | Branch | Project | URL |
 |--------|---------|-----|
-| `staging` | family-photos-staging | photos-staging.radomski.co.nz |
-| `main` | family-photos | photos.radomski.co.nz |
+| `main` | familyphotoblog | photos.radomski.co.nz |
 
-**Workflow:** develop on feature branch → PR to `staging` → test on staging URL → merge to `main` → production deploys automatically.
+**Workflow:** develop on feature branch → open PR → CI runs (lint, typecheck, unit tests) and Vercel builds a preview deployment → click around the preview URL → merge to `main` → production deploys automatically.
 
-`prisma migrate deploy` runs automatically as part of `npm run build` on every Vercel deploy.
+`prisma migrate deploy` runs as part of `npm run build` **only on production builds** (guarded by `VERCEL_ENV` in `scripts/migrate-deploy-production.mjs`). Preview and local builds never apply migrations. Note: preview deployments connect to the production database at runtime, so a PR that adds a migration will not be fully functional on its preview URL — test schema changes locally instead.
 
 After deploying to a new environment, run the seed script to create the initial admin user:
 
@@ -190,7 +189,20 @@ npm run test
 
 ### E2E Tests (Playwright)
 
-E2E tests run against the staging deployment. Include `[e2e]` in your commit message to trigger them in CI. Requires `E2E_DATABASE_URL` GitHub Actions secret (staging Neon direct URL).
+E2E tests run locally on demand against a dev server. They must point at a **test database** (a Neon branch or the old staging DB) — never production, since the setup seeds a test admin user and the tests create/delete content.
+
+```bash
+# 1. Point the app at the test database
+npm run env:staging        # copies .env.local.staging → .env.local
+
+# 2. Set E2E_DATABASE_URL in .env.local to the SAME database (direct, non-pooler URL)
+
+# 3. Start the dev server, then run the tests
+npm run dev
+npm run test:e2e           # defaults to http://localhost:3000
+```
+
+To run against any deployed URL instead: `PLAYWRIGHT_BASE_URL=https://... npm run test:e2e` (with `E2E_DATABASE_URL` pointing at that deployment's database).
 
 ---
 
