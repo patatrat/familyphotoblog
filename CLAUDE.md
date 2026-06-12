@@ -446,9 +446,9 @@ All P1, P2, and P3 features complete. Several P4 features also done. Site is liv
 - `scripts/vercel-ignored-build-step.sh` skips Vercel preview builds for dependabot PRs (set as "Ignored Build Step" in Vercel project settings).
 
 ### Known npm audit vulnerabilities (not directly exploitable)
-- `nodemailer ^7` — SMTP injection CVEs (GHSA-c7w3-x93f-qmm8, GHSA-vvjj-xcjg-gr5g). Neither vector is user-controlled. Blocked by `@auth/core` peer dep `^7.0.7`; cannot upgrade until upstream changes.
-- `@hono/node-server` in `@prisma/dev` — dev/build-time only (Prisma Studio). Not in production.
-- `postcss` in `next` internals — bundled; not exposed to user-controlled CSS.
+- `nodemailer ^7` — SMTP injection CVEs (GHSA-c7w3-x93f-qmm8, GHSA-vvjj-xcjg-gr5g). Neither vector is user-controlled (we don't set transport `name` or `envelope.size`). Patched in nodemailer 8, but `@auth/core` peer dep is still `^7` (verified June 2026); cannot upgrade until upstream changes.
+- `postcss` in `next` internals — Next.js pins its own postcss 8.4.31 at build time; not exposed to user-controlled CSS. Only "fix" npm offers is downgrading next — not applicable.
+- Resolved June 2026: `hono` updated in-range to ≥4.12.21 (4 CVEs); `@hono/node-server` forced to ^1.19.13 via package.json `overrides` (prisma pins `@prisma/dev` exactly, which pinned the vulnerable version — remove the override once prisma's `@prisma/dev` catches up).
 
 ### Remaining work
 - UI7 — UI/UX review with specialised agent skill (P3)
