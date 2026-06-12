@@ -34,9 +34,11 @@ Browser → Cloudflare DNS/CDN → Vercel (Next.js App Router)
 - SHA-256 hash of original bytes stored for per-event duplicate detection
 - Rationale: instant page loads, controlled dimensions, cheaper than on-demand optimisation, EXIF strip in same pipeline; WebP saves ~30% bandwidth over JPEG
 
-**Staging:** Separate Vercel project at `photos-staging.radomski.co.nz` tied to the `staging` branch.
-- Rationale: stable URL required for magic link email flows and reliable Playwright E2E tests
-- Branch preview deployments generate random URLs which break email auth
+**Pre-merge testing:** Vercel preview deployments per PR (no separate staging environment).
+- Each PR builds a preview at a unique URL on the production Vercel project — click around before merging
+- `prisma migrate deploy` only runs on production builds (`VERCEL_ENV` guard in `scripts/migrate-deploy-production.mjs`), so previews can never alter the production schema; they do share the production DB at runtime
+- Playwright E2E runs locally on demand against `next dev` + a test database (`E2E_DATABASE_URL`); auth is seeded directly into the DB so no stable URL is needed
+- History: a separate staging project/branch existed until June 2026; removed as over-sized for a solo-dev family site
 
 **Testing:** Vitest + React Testing Library + Playwright, used selectively.
 - Vitest/RTL: utility functions, auth helpers, image processing logic, components with real branching logic
@@ -66,6 +68,7 @@ NEXT_PUBLIC_APP_URL           # https://photos.radomski.co.nz
 SIGNUP_PASSPHRASE             # Family passphrase required on signup
 ADMIN_EMAIL                   # Admin user seeded via npm run seed
 ADMIN_NAME                    # Admin user display name
+E2E_DATABASE_URL              # Test DB for local Playwright runs (never production)
 ```
 
 All vars must be documented in `.env.example` with placeholder values and comments. Never commit real values.
@@ -250,14 +253,14 @@ Priority scale:
 
 | # | Feature | Priority | Notes |
 |---|---------|----------|-------|
-| IN1 | ✓ GitHub branch protection on `main` — PRs required, no direct push | P1 | |
-| IN2 | ✓ `staging` branch → separate Vercel project at `photos-staging.radomski.co.nz` | P1 | |
+| IN1 | ✓ GitHub branch protection on `main` — PRs required, no direct push | P1 | Also the only deploy gate: Vercel deploys on push regardless of CI |
+| IN2 | ✓ Pre-merge testing via Vercel PR preview deployments | P1 | Replaced separate staging project/branch (removed June 2026) |
 | IN3 | ✓ CI: lint, type-check, unit tests on every PR via GitHub Actions | P1 | |
 | IN4 | ✓ Vitest + React Testing Library (unit/component tests) | P1 | |
 | IN5 | ✓ `.env.example` with all vars documented | P1 | |
 | IN6 | ✓ Prisma migrations tracked in version control | P1 | |
 | IN7 | ✓ Seed script: admin user + sample events for local dev | P1 | |
-| IN8 | ✓ Playwright E2E tests for critical flows, run against staging | P2 | |
+| IN8 | ✓ Playwright E2E tests for critical flows, run locally on demand | P2 | |
 | IN12 | ✓ Move Next.js app from family-photos/ subfolder to repo root | P1 | Update Vercel root directory (prod + staging) and GitHub Actions workflow path |
 | IN13 | ✓ `prisma migrate deploy` runs automatically on every Vercel build | P1 | Added to npm build script |
 | IN9 | ✓ Scheduled DB backup to AWS S3 (Standard-IA) | P3 | pg_dump --format=custom → S3; daily via GitHub Actions |
@@ -438,10 +441,10 @@ model SiteSettings {
 All P1, P2, and P3 features complete. Several P4 features also done. Site is live.
 
 ### Infrastructure notes
-- `prisma migrate deploy` runs as part of `npm run build` — migrations apply automatically on every Vercel deploy
+- `prisma migrate deploy` runs as part of `npm run build` **only when `VERCEL_ENV=production`** (`scripts/migrate-deploy-production.mjs`) — preview and local builds never apply migrations
 - `family-photos/` subfolder fully removed; repo root is the Next.js app
 - Dark mode: class-based via ThemeProvider + localStorage, anti-flash inline script, defaults to system preference
-- E2E tests run against staging (`https://photos-staging.radomski.co.nz`) and are opt-in: include `[e2e]` in the commit message to trigger them. Requires `E2E_DATABASE_URL` GitHub Actions secret (staging Neon direct URL).
+- E2E tests run locally on demand: dev server + test DB, `E2E_DATABASE_URL` in `.env.local` (never production — setup seeds a test admin), `npm run test:e2e`. See README for steps.
 - Dependabot configured: monthly grouped npm + GitHub Actions updates; major version bumps ignored for nodemailer, typescript, eslint, @types/node.
 - `scripts/vercel-ignored-build-step.sh` skips Vercel preview builds for dependabot PRs (set as "Ignored Build Step" in Vercel project settings).
 
