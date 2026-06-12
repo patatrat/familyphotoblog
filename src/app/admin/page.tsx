@@ -16,7 +16,12 @@ import { blobProxy } from "@/lib/blob-url"
 import { RoleSelect } from "./role-select"
 import Link from "next/link"
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
   const session = await requireAdmin()
   const settings = await getSettings()
 
@@ -74,6 +79,13 @@ export default async function AdminPage() {
       <Nav session={session} />
 
       <main className="max-w-5xl mx-auto px-4 py-10 space-y-10">
+
+        {error === "user-has-content" && (
+          <div className="px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+            That user has uploaded photos or created events, so their account can&apos;t be
+            deleted. Revoke their access instead, or delete their content first.
+          </div>
+        )}
 
         {/* Pending approval queue */}
         {settings.approvalRequired && pending.length > 0 && (

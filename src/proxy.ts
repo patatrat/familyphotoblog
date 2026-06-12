@@ -6,6 +6,10 @@ const publicPaths = ["/login", "/signup", "/verify", "/pending"]
 // Paths where authenticated users should be redirected to / (not /pending — unapproved users need to stay there)
 const authRedirectPaths = ["/login", "/signup", "/verify"]
 
+// 'unsafe-eval' is only needed by Next.js fast-refresh in development;
+// 'unsafe-inline' stays for the theme anti-flash script and Next's inline bootstrap
+const isDev = process.env.NODE_ENV === "development"
+
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "SAMEORIGIN",
@@ -13,7 +17,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://analytics.radomski.co.nz",
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://analytics.radomski.co.nz`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
